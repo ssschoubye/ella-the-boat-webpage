@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Ella{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero__inner">
+        <p class="hero__eyebrow">Velkommen ombord</p>
+        <h1>Ella</h1>
+        <p>Her samler vi kalender, logbog og filer om vores skude &mdash; alt samlet ét sted.</p>
+    </div>
+    <svg class="hero__waves" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true">
+        <path fill="currentColor" d="M0,40 C240,80 480,0 720,40 C960,80 1200,0 1440,40 L1440,80 L0,80 Z"/>
+    </svg>
+</section>
+
+<section class="sections">
+    <div class="sections__grid">
+        <a class="card" href="{% url 'kalender' %}">
+            <svg class="card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                <rect x="3" y="5" width="18" height="16" rx="2"/>
+                <path d="M3 9h18M8 3v4M16 3v4"/>
+            </svg>
+            <h2>Kalender</h2>
+            <p>Se hvornår Ella er booket, og planlæg de næste ture på vandet.</p>
+            <span class="card__link">Åbn kalender &rarr;</span>
+        </a>
+
+        <a class="card" href="{% url 'logbog' %}">
+            <svg class="card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                <path d="M4 4h13a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3Z"/>
+                <path d="M4 17a3 3 0 0 1 3-3h13"/>
+                <path d="M8 8h8M8 12h5"/>
+            </svg>
+            <h2>Logbog</h2>
+            <p>Ture, vejr og oplevelser undervejs &mdash; skrevet ned for eftertiden.</p>
+            <span class="card__link">Læs logbogen &rarr;</span>
+        </a>
+
+        <a class="card" href="{% url 'filarkiv' %}">
+            <svg class="card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                <path d="M4 7a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/>
+            </svg>
+            <h2>Filarkiv</h2>
+            <p>Manualer, papirer og billeder samlet ét sted til fri afbenyttelse.</p>
+            <span class="card__link">Gå til filarkiv &rarr;</span>
+        </a>
+
+        <a class="card" href="{% url 'vedligehold' %}">
+            <svg class="card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                <path d="M14.7 6.3a4 4 0 1 0-5.66 5.66L3 18v3h3l6.04-6.04a4 4 0 0 0 5.66-5.66l-2.83 2.83-2-2 2.83-2.83z" stroke-linejoin="round" stroke-linecap="round"/>
+            </svg>
+            <h2>Vedligehold</h2>
+            <p>Opgaver, tjeklister og service, så Ella altid er klar til at sejle.</p>
+            <span class="card__link">Gå til vedligehold &rarr;</span>
+        </a>
+
+        <a class="card" href="{% url 'skader' %}">
+            <svg class="card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                <path d="M12 3 2 20h20L12 3Z" stroke-linejoin="round"/>
+                <path d="M12 9.5v4.5" stroke-linecap="round"/>
+                <path d="M12 16.8v.1" stroke-linecap="round"/>
+            </svg>
+            <h2>Skader</h2>
+            <p>Overblik over skader og reparationer, sket og planlagte.</p>
+            <span class="card__link">Gå til skader &rarr;</span>
+        </a>
+    </div>
+</section>
+{% endblock %}

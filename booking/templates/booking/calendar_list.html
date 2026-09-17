@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load static booking_extras %}
+
+{% block title %}Kalender &middot; Ella{% endblock %}
+
+{% block content %}
+<section class="page-header page-header--split">
+    <div>
+        <p class="page-header__eyebrow">Kalender</p>
+        <h1>Hvornår er Ella booket?</h1>
+    </div>
+    <a class="button-primary" href="{% url 'tilfoj_tur' %}">+ Tilføj tur</a>
+</section>
+
+{% include "booking/_view_tabs.html" %}
+
+<section class="list-view">
+    <h2 class="list-view__heading">Kommende ture</h2>
+    {% if upcoming_groups %}
+        {% for month_label, bookings in upcoming_groups %}
+        <div class="list-view__group">
+            <h3 class="list-view__month">{{ month_label }}</h3>
+            <ul class="upcoming__list">
+                {% for booking in bookings %}
+                <li class="upcoming__item">
+                    <button type="button" class="upcoming__item-trigger js-event-trigger{% if booking.end_date.date != booking.start_date.date %} upcoming__item-trigger--multi{% endif %}"
+                            data-title="{{ booking.title }}"
+                            data-booker="{{ booking.get_booker_display }}"
+                            data-start="{{ booking.start_date|danish_datetime }}"
+                            data-end="{{ booking.end_date|danish_datetime }}"
+                            data-notes="{{ booking.notes }}"
+                            data-edit-url="{% url 'rediger_tur' booking.pk %}">
+                        <span class="upcoming__dates">{{ booking.start_date|date:"j." }} kl. {{ booking.start_date|date:"H:i" }}{% if booking.end_date.date != booking.start_date.date %} &ndash; {{ booking.end_date|date:"j." }} kl. {{ booking.end_date|date:"H:i" }}{% else %}&ndash;{{ booking.end_date|date:"H:i" }}{% endif %}</span>
+                        <span class="upcoming__title">{{ booking.title }}</span>
+                        <span class="upcoming__booker">{{ booking.get_booker_display }}</span>
+                    </button>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+    {% else %}
+    <p class="upcoming__empty">Ingen kommende ture endnu.</p>
+    {% endif %}
+
+    {% if past_groups %}
+    <details class="list-view__past">
+        <summary>Tidligere ture ({{ past_count }})</summary>
+        {% for month_label, bookings in past_groups %}
+        <div class="list-view__group">
+            <h3 class="list-view__month">{{ month_label }}</h3>
+            <ul class="upcoming__list">
+                {% for booking in bookings %}
+                <li class="upcoming__item upcoming__item--past">
+                    <button type="button" class="upcoming__item-trigger js-event-trigger{% if booking.end_date.date != booking.start_date.date %} upcoming__item-trigger--multi{% endif %}"
+                            data-title="{{ booking.title }}"
+                            data-booker="{{ booking.get_booker_display }}"
+                            data-start="{{ booking.start_date|danish_datetime }}"
+                            data-end="{{ booking.end_date|danish_datetime }}"
+                            data-notes="{{ booking.notes }}"
+                            data-edit-url="{% url 'rediger_tur' booking.pk %}">
+                        <span class="upcoming__dates">{{ booking.start_date|date:"j." }} kl. {{ booking.start_date|date:"H:i" }}{% if booking.end_date.date != booking.start_date.date %} &ndash; {{ booking.end_date|date:"j." }} kl. {{ booking.end_date|date:"H:i" }}{% else %}&ndash;{{ booking.end_date|date:"H:i" }}{% endif %}</span>
+                        <span class="upcoming__title">{{ booking.title }}</span>
+                        <span class="upcoming__booker">{{ booking.get_booker_display }}</span>
+                    </button>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+    </details>
+    {% endif %}
+</section>
+
+{% include "booking/_event_modal.html" %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/event-modal.js' %}"></script>
+{% endblock %}

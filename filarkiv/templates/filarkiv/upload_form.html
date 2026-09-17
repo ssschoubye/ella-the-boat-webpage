@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Upload fil &middot; Ella{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <p class="page-header__eyebrow">Filarkiv</p>
+    <h1>Upload fil</h1>
+</section>
+
+<form method="post" enctype="multipart/form-data" class="form-card">
+    {% csrf_token %}
+
+    <div class="form-field">
+        <label for="{{ form.file.id_for_label }}">{{ form.file.label }}</label>
+        {{ form.file }}
+        <p class="form-field__hint">Maks. 25 MB pr. fil.</p>
+        {% if form.file.errors %}<p class="form-field__errors">{{ form.file.errors|join:", " }}</p>{% endif %}
+    </div>
+
+    <div class="form-field">
+        <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
+        {{ form.title }}
+        <p class="form-field__hint">Lades feltet tomt, bruges filnavnet som titel.</p>
+        {% if form.title.errors %}<p class="form-field__errors">{{ form.title.errors|join:", " }}</p>{% endif %}
+    </div>
+
+    <div class="form-field">
+        <label for="{{ form.uploaded_by.id_for_label }}">{{ form.uploaded_by.label }}</label>
+        {{ form.uploaded_by }}
+        {% if form.uploaded_by.errors %}<p class="form-field__errors">{{ form.uploaded_by.errors|join:", " }}</p>{% endif %}
+    </div>
+
+    <div class="form-field">
+        <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+        {{ form.description }}
+        {% if form.description.errors %}<p class="form-field__errors">{{ form.description.errors|join:", " }}</p>{% endif %}
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="button-primary">Upload</button>
+        <a class="button-secondary" href="{% url 'filarkiv' %}">Annuller</a>
+    </div>
+</form>
+{% endblock %}

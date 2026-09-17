@@ -1,0 +1,27 @@
+# Systemd unit for running the app with Gunicorn on the Hetzner server.
+# Install with:
+#   sudo cp deploy/gunicorn.service /etc/systemd/system/mysite.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now mysite
+#
+# Adjust the paths below (/home/deploy/mysite) to match where you clone the
+# project on the server, and the user/group to whatever non-root user runs it.
+
+[Unit]
+Description=Gunicorn daemon for mysite Django project
+After=network.target
+
+[Service]
+User=deploy
+Group=www-data
+WorkingDirectory=/home/deploy/mysite
+EnvironmentFile=/home/deploy/mysite/.env
+Environment="DJANGO_SETTINGS_MODULE=config.settings.prod"
+ExecStart=/home/deploy/mysite/venv/bin/gunicorn \
+          --access-logfile - \
+          --workers 3 \
+          --bind unix:/run/mysite.sock \
+          config.wsgi:application
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,23 @@
+<div class="event-modal" id="event-modal" hidden>
+    <div class="event-modal__backdrop" data-close></div>
+    <div class="event-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="event-modal-title" tabindex="-1">
+        <button type="button" class="event-modal__close" data-close aria-label="Luk">&times;</button>
+        <p class="event-modal__eyebrow" data-field="booker"></p>
+        <h2 class="event-modal__title" id="event-modal-title" data-field="title"></h2>
+        <dl class="event-modal__meta">
+            <div>
+                <dt>Start</dt>
+                <dd data-field="start"></dd>
+            </div>
+            <div>
+                <dt>Slut</dt>
+                <dd data-field="end"></dd>
+            </div>
+        </dl>
+        <p class="event-modal__notes" data-field="notes" hidden></p>
+        <div class="event-modal__actions">
+            <a class="button-primary" data-field="edit-href" href="#">Rediger tur</a>
+            <button type="button" class="button-secondary" data-close>Luk</button>
+        </div>
+    </div>
+</div>

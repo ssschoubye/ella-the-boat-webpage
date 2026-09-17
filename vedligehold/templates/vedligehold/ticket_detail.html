@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}{{ ticket.title }} &middot; Vedligehold &middot; Ella{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <p class="page-header__eyebrow">Vedligehold</p>
+    <h1>{{ ticket.title }}</h1>
+</section>
+
+<div class="ticket">
+    <div class="ticket__meta-row">
+        <span class="ticket__status-badge">{{ ticket.get_status_display }}</span>
+        {% if ticket.archived %}<span class="ticket__archived-badge">Arkiveret {{ ticket.archived_at|date:"j. M Y" }}</span>{% endif %}
+    </div>
+
+    <dl class="ticket__meta">
+        <div>
+            <dt>Oprettet</dt>
+            <dd>{{ ticket.created_at|date:"j. M Y" }}{% if ticket.created_by %} af {{ ticket.get_created_by_display }}{% endif %}</dd>
+        </div>
+        <div>
+            <dt>Opdateret</dt>
+            <dd>{{ ticket.updated_at|date:"j. M Y H:i" }}</dd>
+        </div>
+        {% if sweep_date %}
+        <div>
+            <dt>Arkiveres automatisk</dt>
+            <dd>om {{ sweep_date|timeuntil }}</dd>
+        </div>
+        {% endif %}
+    </dl>
+
+    {% if ticket.description %}<p class="ticket__description">{{ ticket.description|linebreaksbr }}</p>{% endif %}
+
+    {% if not ticket.archived %}
+    <div class="ticket__move-actions">
+        <span class="ticket__move-label">Flyt til</span>
+        {% for value, label in status_choices %}
+        <form method="post" action="{% url 'vedligehold_ticket_move' ticket.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'vedligehold_ticket_detail' ticket.pk %}">
+            <input type="hidden" name="status" value="{{ value }}">
+            <button type="submit" class="ticket__move-btn">{{ label }}</button>
+        </form>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="ticket__actions">
+        {% if not ticket.archived %}
+        <form method="post" action="{% url 'vedligehold_ticket_archive' ticket.pk %}" onsubmit="return confirm('Arkiver \'{{ ticket.title|escapejs }}\'? Den forsvinder fra tavlen, men kan altid genåbnes.');">
+            {% csrf_token %}
+            <button type="submit" class="button-danger">Arkiver</button>
+        </form>
+        {% else %}
+        <form method="post" action="{% url 'vedligehold_ticket_reopen' ticket.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="button-primary">Genåbn</button>
+        </form>
+        {% endif %}
+        <a class="button-secondary" href="{% url 'vedligehold' %}">&larr; Til tavlen</a>
+    </div>
+</div>
+
+<section class="comments">
+    <h2 class="comments__heading">Kommentarer{% if comments %} ({{ comments|length }}){% endif %}</h2>
+
+    {% if comments %}
+    <ul class="comments__list">
+        {% for comment in comments %}
+        <li class="comments__item">
+            <p class="comments__meta">
+                <strong>{{ comment.get_author_display|default:"Anonym" }}</strong>
+                &middot; {{ comment.created_at|date:"j. M Y H:i" }}
+            </p>
+            <p class="comments__text">{{ comment.text|linebreaksbr }}</p>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="comments__empty">Ingen kommentarer endnu.</p>
+    {% endif %}
+
+    <form method="post" class="form-card comments__form">
+        {% csrf_token %}
+        <div class="form-field">
+            <label for="{{ form.author.id_for_label }}">{{ form.author.label }}</label>
+            {{ form.author }}
+            {% if form.author.errors %}<p class="form-field__errors">{{ form.author.errors|join:", " }}</p>{% endif %}
+        </div>
+        <div class="form-field">
+            <label for="{{ form.text.id_for_label }}">{{ form.text.label }}</label>
+            {{ form.text }}
+            {% if form.text.errors %}<p class="form-field__errors">{{ form.text.errors|join:", " }}</p>{% endif %}
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="button-primary">Tilføj kommentar</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

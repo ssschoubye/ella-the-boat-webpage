@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load static booking_extras %}
+
+{% block title %}Kalender &middot; Ella{% endblock %}
+
+{% block content %}
+<section class="page-header page-header--split">
+    <div>
+        <p class="page-header__eyebrow">Kalender</p>
+        <h1>Hvornår er Ella booket?</h1>
+    </div>
+    <a class="button-primary" href="{% url 'tilfoj_tur' %}">+ Tilføj tur</a>
+</section>
+
+{% include "booking/_view_tabs.html" %}
+
+<section class="calendar">
+    <div class="calendar__toolbar">
+        <a class="calendar__nav" href="{% url 'kalender_uge_at' prev_year prev_week %}" aria-label="Forrige uge">&larr;</a>
+        <h2 class="calendar__label">{{ week_label }}{% if is_current_week %} <span class="calendar__today-badge">denne uge</span>{% endif %}</h2>
+        <a class="calendar__nav" href="{% url 'kalender_uge_at' next_year next_week %}" aria-label="Næste uge">&rarr;</a>
+    </div>
+    <p class="calendar__range">{{ week_range_label }}</p>
+
+    <div class="week-grid">
+        {% for day in days %}
+        <div class="week-day{% if day.is_today %} week-day--today{% endif %}">
+            <div class="week-day__header">
+                <span class="week-day__name">{{ day.weekday_full }}</span>
+                <span class="week-day__date">{{ day.date_label }}</span>
+            </div>
+            {% if day.bookings %}
+            <ul class="week-day__bookings">
+                {% for booking in day.bookings %}
+                <li>
+                    <button type="button" class="week-booking js-event-trigger{% if booking.end_date.date != booking.start_date.date %} week-booking--multi{% endif %}"
+                            data-title="{{ booking.title }}"
+                            data-booker="{{ booking.get_booker_display }}"
+                            data-start="{{ booking.start_date|danish_datetime }}"
+                            data-end="{{ booking.end_date|danish_datetime }}"
+                            data-notes="{{ booking.notes }}"
+                            data-edit-url="{% url 'rediger_tur' booking.pk %}">
+                        <span class="week-booking__time">{{ booking.start_date|date:"H:i" }}&ndash;{{ booking.end_date|date:"H:i" }}</span>
+                        <span class="week-booking__title">{{ booking.title }}</span>
+                        {% if booking.end_date.date != booking.start_date.date %}
+                        <span class="week-booking__multi-badge">{{ booking.start_date|date:"j." }}&ndash;{{ booking.end_date|date:"j." }}</span>
+                        {% endif %}
+                        <span class="week-booking__booker">{{ booking.get_booker_display }}</span>
+                    </button>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="week-day__empty">Ingen ture</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+{% include "booking/_event_modal.html" %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/event-modal.js' %}"></script>
+{% endblock %}

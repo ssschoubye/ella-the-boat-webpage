@@ -1,0 +1,5 @@
+<div class="view-tabs">
+    <a href="{% url 'kalender' %}" class="view-tabs__item{% if active_view == 'month' %} is-active{% endif %}">Måned</a>
+    <a href="{% url 'kalender_uge' %}" class="view-tabs__item{% if active_view == 'week' %} is-active{% endif %}">Uge</a>
+    <a href="{% url 'kalender_liste' %}" class="view-tabs__item{% if active_view == 'list' %} is-active{% endif %}">Liste</a>
+</div>

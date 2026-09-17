@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if booking %}Rediger tur{% else %}Tilføj tur{% endif %} &middot; Ella{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'vendor/flatpickr/flatpickr.min.css' %}">
+<link rel="stylesheet" href="{% static 'css/flatpickr-theme.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <p class="page-header__eyebrow">Kalender</p>
+    <h1>{% if booking %}Rediger tur{% else %}Tilføj tur{% endif %}</h1>
+</section>
+
+{% if series_count %}
+<div class="series-notice">
+    Denne tur er del af en gentagende serie ({{ series_count }} ture i alt). Ændringer her gælder kun denne ene tur.
+</div>
+{% endif %}
+
+<form method="post" class="form-card">
+    {% csrf_token %}
+
+    <div class="form-field">
+        <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
+        {{ form.title }}
+        {% if form.title.errors %}<p class="form-field__errors">{{ form.title.errors|join:", " }}</p>{% endif %}
+    </div>
+
+    <div class="form-field">
+        <label for="{{ form.booker.id_for_label }}">{{ form.booker.label }}</label>
+        {{ form.booker }}
+        {% if form.booker.errors %}<p class="form-field__errors">{{ form.booker.errors|join:", " }}</p>{% endif %}
+    </div>
+
+    <div class="form-field">
+        <label for="{{ form.start_date.id_for_label }}">{{ form.start_date.label }}</label>
+        {{ form.start_date }}
+        {% if form.start_date.errors %}<p class="form-field__errors">{{ form.start_date.errors|join:", " }}</p>{% endif %}
+    </div>
+
+    <div class="form-field">
+        <label for="{{ form.end_date.id_for_label }}">{{ form.end_date.label }}</label>
+        {{ form.end_date }}
+        <p class="form-field__hint">Samme som startdato ved en endagstur.</p>
+        {% if form.end_date.errors %}<p class="form-field__errors">{{ form.end_date.errors|join:", " }}</p>{% endif %}
+    </div>
+
+    <div class="form-field">
+        <label for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+        {{ form.notes }}
+        {% if form.notes.errors %}<p class="form-field__errors">{{ form.notes.errors|join:", " }}</p>{% endif %}
+    </div>
+
+    {% if not booking %}
+    <div class="form-field">
+        <label for="{{ form.repeat_type.id_for_label }}">{{ form.repeat_type.label }}</label>
+        {{ form.repeat_type }}
+        {% if form.repeat_type.errors %}<p class="form-field__errors">{{ form.repeat_type.errors|join:", " }}</p>{% endif %}
+    </div>
+
+    <div class="form-field" id="repeat-count-field">
+        <label for="{{ form.repeat_count.id_for_label }}">{{ form.repeat_count.label }}</label>
+        {{ form.repeat_count }}
+        <p class="form-field__hint">{{ form.repeat_count.help_text }}</p>
+        {% if form.repeat_count.errors %}<p class="form-field__errors">{{ form.repeat_count.errors|join:", " }}</p>{% endif %}
+    </div>
+    {% endif %}
+
+    <div class="form-actions">
+        <button type="submit" class="button-primary">{% if booking %}Gem ændringer{% else %}Gem tur{% endif %}</button>
+        <a class="button-secondary" href="{% url 'kalender' %}">Annuller</a>
+    </div>
+</form>
+
+{% if booking %}
+<form method="post" action="{% url 'slet_tur' booking.pk %}" class="form-card form-card--delete"
+      onsubmit="return confirm('Slet turen \'{{ booking.title|escapejs }}\'? Det kan ikke fortrydes.');">
+    {% csrf_token %}
+    <div>
+        <p class="delete-block__title">Slet denne tur</p>
+        <p class="form-field__hint">Turen fjernes permanent fra kalenderen.</p>
+    </div>
+    <button type="submit" class="button-danger">Slet tur</button>
+</form>
+
+{% if series_count %}
+<form method="post" action="{% url 'slet_serie' booking.pk %}" class="form-card form-card--delete"
+      onsubmit="return confirm('Slet alle {{ series_count }} ture i denne serie? Det kan ikke fortrydes.');">
+    {% csrf_token %}
+    <div>
+        <p class="delete-block__title">Slet hele serien</p>
+        <p class="form-field__hint">Fjerner alle {{ series_count }} gentagelser af denne tur.</p>
+    </div>
+    <button type="submit" class="button-danger">Slet serie</button>
+</form>
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'vendor/flatpickr/flatpickr.min.js' %}"></script>
+<script src="{% static 'vendor/flatpickr/l10n_da.js' %}"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        flatpickr.localize(flatpickr.l10ns.da);
+        document.querySelectorAll(".js-datetime-picker").forEach(function (el) {
+            var originalId = el.id;
+            var fp = flatpickr(el, {
+                enableTime: true,
+                time_24hr: true,
+                dateFormat: "Y-m-d\\TH:i",
+                altInput: true,
+                altFormat: "j. F Y k\\l. H:i",
+            });
+            if (originalId && fp.altInput) {
+                fp.altInput.id = originalId;
+                el.removeAttribute("id");
+            }
+        });
+
+        var repeatType = document.getElementById("{{ form.repeat_type.id_for_label }}");
+        var repeatCountField = document.getElementById("repeat-count-field");
+        if (repeatType && repeatCountField) {
+            var toggleRepeatCount = function () {
+                repeatCountField.hidden = repeatType.value === "none";
+            };
+            toggleRepeatCount();
+            repeatType.addEventListener("change", toggleRepeatCount);
+        }
+    });
+</script>
+{% endblock %}

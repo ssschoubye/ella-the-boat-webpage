@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Ella{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% load static %}{% static 'css/style.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <header class="site-header">
+        <div class="wrap site-header__inner">
+            <a class="brand" href="{% url 'home' %}">
+                <svg class="brand__mark" viewBox="0 0 48 48" aria-hidden="true">
+                    <path d="M6 30c4 6 10 9 18 9s14-3 18-9l-3-1c-2 5-8 8-15 8s-13-3-15-8z" fill="currentColor"/>
+                    <path d="M24 6v20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M24 8c6 1 10 5 12 11l-12 4z" fill="currentColor" opacity="0.85"/>
+                </svg>
+                <span>Ella</span>
+            </a>
+            <div class="site-header__right">
+                <nav class="nav">
+                    <a href="{% url 'home' %}">Forside</a>
+                    <a href="{% url 'kalender' %}">Kalender</a>
+                    <a href="{% url 'logbog' %}">Logbog</a>
+                    <a href="{% url 'filarkiv' %}">Filarkiv</a>
+                    <a href="{% url 'vedligehold' %}">Vedligehold</a>
+                    <a href="{% url 'skader' %}">Skader</a>
+                </nav>
+                <form method="post" action="{% url 'logout' %}" class="logout-form">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-button">Log ud</button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <div class="wrap site-footer__inner">
+            <span>Ella</span>
+            <span class="site-footer__dim">&copy; {% now "Y" %}</span>
+        </div>
+    </footer>
+
+    <script src="{% static 'js/scroll-restore.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

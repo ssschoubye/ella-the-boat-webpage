@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Vedligehold &middot; Ella{% endblock %}
+
+{% block content %}
+<section class="page-header page-header--split">
+    <div>
+        <p class="page-header__eyebrow">Vedligehold</p>
+        <h1>Opgaver og reparationer</h1>
+    </div>
+    <a class="button-secondary" href="{% url 'vedligehold_archive' %}">Se arkiv &rarr;</a>
+</section>
+
+<section class="board">
+    <form method="get" class="search-bar">
+        <input type="search" name="q" value="{{ query }}" placeholder="Søg i åbne opgaver&hellip;">
+        <button type="submit" class="search-bar__button">Søg</button>
+        {% if query %}<a class="button-secondary" href="{% url 'vedligehold' %}">Ryd søgning</a>{% endif %}
+    </form>
+
+    <div class="board__columns">
+        {% for column in columns %}
+        <div class="board__column">
+            <div class="board__column-header">
+                <h2>{{ column.label }} <span class="board__column-count">{{ column.tickets|length }}</span></h2>
+                <a class="board__column-add" href="{% url 'vedligehold_ticket_create' %}?status={{ column.value }}" aria-label="Ny opgave i {{ column.label }}">+</a>
+            </div>
+            <div class="board__column-body">
+                {% if column.tickets %}
+                <ul class="board__card-list">
+                    {% for ticket in column.tickets %}
+                    <li class="board__card">
+                        <a class="board__card-title" href="{% url 'vedligehold_ticket_detail' ticket.pk %}">{{ ticket.title }}</a>
+                        {% if ticket.description %}<p class="board__card-desc">{{ ticket.description|truncatewords:16 }}</p>{% endif %}
+                        <p class="board__card-meta">
+                            {{ ticket.updated_at|date:"j. M" }}
+                            {% if ticket.created_by %}&middot; {{ ticket.get_created_by_display }}{% endif %}
+                            {% with count=ticket.comments.count %}
+                            {% if count %}&middot; {{ count }} kommentar{{ count|pluralize:"er" }}{% endif %}
+                            {% endwith %}
+                        </p>
+                        <div class="board__card-move">
+                            {% if column.prev_status %}
+                            <form method="post" action="{% url 'vedligehold_ticket_move' ticket.pk %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <input type="hidden" name="status" value="{{ column.prev_status.0 }}">
+                                <button type="submit" class="board__move-btn" title="Flyt til: {{ column.prev_status.1 }}" aria-label="Flyt til {{ column.prev_status.1 }}">&larr;</button>
+                            </form>
+                            {% endif %}
+                            {% if column.skip_statuses %}
+                            <form method="post" action="{% url 'vedligehold_ticket_move' ticket.pk %}" class="board__move-jump">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <select name="status" onchange="this.form.submit()" aria-label="Flyt til andet stadie">
+                                    <option value="">Flyt til&hellip;</option>
+                                    {% for value, label in column.skip_statuses %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+                            {% endif %}
+                            {% if column.next_status %}
+                            <form method="post" action="{% url 'vedligehold_ticket_move' ticket.pk %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <input type="hidden" name="status" value="{{ column.next_status.0 }}">
+                                <button type="submit" class="board__move-btn board__move-btn--next" title="Flyt til: {{ column.next_status.1 }}" aria-label="Flyt til {{ column.next_status.1 }}">&rarr;</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="board__column-empty">
+                    {% if query %}Ingen match.{% else %}Ingen opgaver her.{% endif %}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

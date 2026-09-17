@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Arkiv &middot; Vedligehold &middot; Ella{% endblock %}
+
+{% block content %}
+<section class="page-header page-header--split">
+    <div>
+        <p class="page-header__eyebrow">Vedligehold</p>
+        <h1>Arkiv</h1>
+    </div>
+    <a class="button-secondary" href="{% url 'vedligehold' %}">&larr; Til tavlen</a>
+</section>
+
+<section class="board-archive">
+    <form method="get" class="search-bar">
+        <input type="search" name="q" value="{{ query }}" placeholder="Søg i arkiverede opgaver&hellip;">
+        <button type="submit" class="search-bar__button">Søg</button>
+        {% if query %}<a class="button-secondary" href="{% url 'vedligehold_archive' %}">Ryd søgning</a>{% endif %}
+    </form>
+
+    {% if tickets %}
+    <ul class="board-archive__list">
+        {% for ticket in tickets %}
+        <li class="board-archive__item">
+            <div class="board-archive__info">
+                <a class="board-archive__title" href="{% url 'vedligehold_ticket_detail' ticket.pk %}">{{ ticket.title }}</a>
+                <p class="board-archive__meta">
+                    {{ ticket.get_status_display }}
+                    &middot; arkiveret {{ ticket.archived_at|date:"j. M Y" }}
+                    {% if ticket.created_by %}&middot; {{ ticket.get_created_by_display }}{% endif %}
+                </p>
+            </div>
+            <form method="post" action="{% url 'vedligehold_ticket_reopen' ticket.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="button-secondary">Genåbn</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="archive__empty">
+        {% if query %}Ingen arkiverede opgaver matcher søgningen.{% else %}Arkivet er tomt.{% endif %}
+    </p>
+    {% endif %}
+</section>
+{% endblock %}

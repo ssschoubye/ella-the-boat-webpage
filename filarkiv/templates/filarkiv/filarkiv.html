@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Filarkiv &middot; Ella{% endblock %}
+
+{% block content %}
+<section class="page-header page-header--split">
+    <div>
+        <p class="page-header__eyebrow">Filarkiv</p>
+        <h1>Manualer, papirer og billeder</h1>
+    </div>
+    <a class="button-primary" href="{% url 'filarkiv_upload' %}">+ Upload fil</a>
+</section>
+
+<section class="archive">
+    <form method="get" class="search-bar">
+        <input type="search" name="q" value="{{ query }}" placeholder="Søg efter filnavn, titel eller beskrivelse&hellip;">
+        <button type="submit" class="search-bar__button">Søg</button>
+        {% if query %}<a class="button-secondary" href="{% url 'filarkiv' %}">Ryd søgning</a>{% endif %}
+    </form>
+
+    {% if files %}
+    <ul class="archive__list">
+        {% for f in files %}
+        <li class="archive__item">
+            <span class="archive__ext">{{ f.extension|default:"FIL" }}</span>
+            <div class="archive__info">
+                <p class="archive__title">{{ f.title }}</p>
+                <p class="archive__meta">
+                    {{ f.uploaded_at|date:"j. M Y" }}
+                    {% if f.uploaded_by %}&middot; {{ f.get_uploaded_by_display }}{% endif %}
+                    &middot; {{ f.file.size|filesizeformat }}
+                </p>
+                {% if f.description %}<p class="archive__description">{{ f.description }}</p>{% endif %}
+            </div>
+            <div class="archive__actions">
+                <a class="button-secondary" href="{% url 'filarkiv_download' f.pk %}">Hent</a>
+                <form method="post" action="{% url 'filarkiv_delete' f.pk %}" onsubmit="return confirm('Slet filen \'{{ f.title|escapejs }}\'? Det kan ikke fortrydes.');">
+                    {% csrf_token %}
+                    <button type="submit" class="button-danger">Slet</button>
+                </form>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="archive__empty">
+        {% if query %}Ingen filer matcher søgningen.{% else %}Der er ikke uploadet nogen filer endnu.{% endif %}
+    </p>
+    {% endif %}
+</section>
+{% endblock %}

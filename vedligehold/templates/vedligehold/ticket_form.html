@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Ny opgave &middot; Vedligehold &middot; Ella{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <p class="page-header__eyebrow">Vedligehold</p>
+    <h1>Ny opgave</h1>
+</section>
+
+<form method="post" class="form-card">
+    {% csrf_token %}
+
+    <div class="form-field">
+        <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
+        {{ form.title }}
+        {% if form.title.errors %}<p class="form-field__errors">{{ form.title.errors|join:", " }}</p>{% endif %}
+    </div>
+
+    <div class="form-field">
+        <label for="{{ form.status.id_for_label }}">{{ form.status.label }}</label>
+        {{ form.status }}
+        {% if form.status.errors %}<p class="form-field__errors">{{ form.status.errors|join:", " }}</p>{% endif %}
+    </div>
+
+    <div class="form-field">
+        <label for="{{ form.created_by.id_for_label }}">{{ form.created_by.label }}</label>
+        {{ form.created_by }}
+        {% if form.created_by.errors %}<p class="form-field__errors">{{ form.created_by.errors|join:", " }}</p>{% endif %}
+    </div>
+
+    <div class="form-field">
+        <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+        {{ form.description }}
+        {% if form.description.errors %}<p class="form-field__errors">{{ form.description.errors|join:", " }}</p>{% endif %}
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="button-primary">Opret opgave</button>
+        <a class="button-secondary" href="{% url 'vedligehold' %}">Annuller</a>
+    </div>
+</form>
+{% endblock %}

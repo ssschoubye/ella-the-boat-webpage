@@ -1,0 +1,148 @@
+/* Reskins flatpickr to match the Ella site palette (navy / wood / cream). */
+
+.flatpickr-calendar {
+    font-family: var(--font-body);
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 16px 40px rgba(11, 37, 69, 0.22);
+    border: 1px solid var(--line);
+    /* flatpickr's day grid has a fixed 307.875px width baked into its own
+       CSS; go wider than that and center it so both sides get equal
+       padding instead of the grid butting against one edge. */
+    width: 331.875px;
+}
+
+.flatpickr-innerContainer {
+    justify-content: center;
+}
+
+.flatpickr-calendar.arrowTop:before,
+.flatpickr-calendar.arrowTop:after {
+    display: none;
+}
+
+.flatpickr-months {
+    background: var(--navy);
+    border-radius: 14px 14px 0 0;
+    padding: 0.6rem 0;
+}
+
+.flatpickr-months .flatpickr-month {
+    color: var(--cream);
+    fill: var(--cream);
+    height: 2.4rem;
+}
+
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+    color: var(--cream);
+    fill: var(--cream);
+    top: 0.5rem;
+}
+
+.flatpickr-months .flatpickr-prev-month:hover svg,
+.flatpickr-months .flatpickr-next-month:hover svg {
+    fill: var(--wood);
+}
+
+.flatpickr-current-month {
+    font-size: 1rem;
+    padding: 0.3rem 0 0;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months,
+.flatpickr-current-month input.cur-year {
+    color: var(--cream);
+    font-family: var(--font-display);
+    font-weight: 600;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months option {
+    color: var(--ink);
+}
+
+span.flatpickr-weekday {
+    background: #fff;
+    color: #8a93a0;
+    font-weight: 600;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.flatpickr-day {
+    border-radius: 8px;
+    color: var(--ink);
+}
+
+.flatpickr-day.today {
+    border-color: var(--wood);
+}
+
+.flatpickr-day:hover,
+.flatpickr-day.today:hover {
+    background: rgba(19, 64, 116, 0.1);
+    border-color: transparent;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover {
+    background: var(--sea);
+    border-color: var(--sea);
+    color: #fff;
+}
+
+.flatpickr-day.selected.today {
+    border-color: var(--wood);
+}
+
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+    color: #c3c9d1;
+}
+
+.flatpickr-time {
+    border-top: 1px solid var(--line);
+}
+
+.flatpickr-time input,
+.flatpickr-time .flatpickr-time-separator,
+.flatpickr-time .flatpickr-am-pm {
+    color: var(--ink);
+    font-weight: 600;
+}
+
+.flatpickr-time input:hover,
+.flatpickr-time .flatpickr-am-pm:hover,
+.flatpickr-time input:focus,
+.flatpickr-time .flatpickr-am-pm:focus {
+    background: rgba(19, 64, 116, 0.08);
+}
+
+.numInputWrapper span.arrowUp:after {
+    border-bottom-color: var(--sea);
+}
+
+.numInputWrapper span.arrowDown:after {
+    border-top-color: var(--sea);
+}
+
+/* Alt display input (what the visitor actually types into) */
+
+input.flatpickr-input,
+input.form-control.input {
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--cream);
+    width: 100%;
+}
+
+input.flatpickr-input:focus {
+    outline: none;
+    border-color: var(--sea-light);
+    background: #fff;
+}
