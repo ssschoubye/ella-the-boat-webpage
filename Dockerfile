@@ -1,5 +1,5 @@
 # Production image, built by .github/workflows/build.yml and pulled by the
-# home server. See deploy/DEPLOY.md for how the server runs it.
+# home server. See docs/deployment.md for how the server runs it.
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \

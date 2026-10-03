@@ -21,19 +21,24 @@ python manage.py test                            # all tests
 python manage.py test booking                    # one app
 python manage.py test booking.tests.SomeTestCase.test_method   # single test
 
-docker build -t ella:test .                      # production image (see deploy/DEPLOY.md to run it)
+docker build -t ella:test .                      # production image (see docs/deployment.md to run it)
 ```
 
 `manage.py` defaults to `config.settings.dev` (SQLite, DEBUG=True). There is no linter config; tests exist only in `core/tests.py`.
 
+## Documentation
+
+`docs/` holds architecture, deployment, security/sign-on and operations docs (index: `docs/README.md`). Decisions are recorded as ADRs in `docs/adr/`. Read the relevant ADR before changing hosting, storage, static files, HTTPS handling or auth. If you change one of those decisions, add a new ADR that supersedes it (template in `docs/adr/README.md`) rather than editing the old one, and keep the other docs current.
+
 ## Deployment
 
-Production is a Docker container on the user's home server, managed by the separate `home-server` repo (sibling directory `../home-server`; read it for context but **don't edit it**). `deploy/DEPLOY.md` is the source of truth, including the edits home-server needs. Key facts:
+Production is a Docker container on the user's home server, managed by the separate `home-server` repo (sibling directory `../home-server`; read it for context but **don't edit it**). `docs/deployment.md` is the source of truth, including the edits home-server needs. Key facts:
 - Pushing to `main` runs `.github/workflows/build.yml`: tests, then home-server's reusable `build-site-image.yml` pushes `ghcr.io/ssschoubye/ella:sha-<short>`. The server pins that tag; there is no `latest`.
 - Traffic: Cloudflare (TLS) → cloudflared → Caddy → gunicorn on port 80. `config.settings.prod` trusts `X-Forwarded-Proto` and deliberately doesn't redirect to HTTPS (Cloudflare does it).
 - All state lives in `DJANGO_DATA_DIR` (`/data`, bind-mounted from `/srv/state/ella`): SQLite DB, `media/`, and `backups/db.sqlite3`, written by `manage.py snapshot_db` from restic's pre-backup hook. The root filesystem is read-only; static files are collected at build time and served by WhiteNoise (enabled in prod settings only).
 - `deploy/entrypoint.sh` chowns `/data` as root, drops to user `app` (uid 10001), runs `migrate`, then starts gunicorn. Migrations therefore run on every deploy.
-- `/healthz/` is the container healthcheck and is exempt from the login wall.
+- `/healthz/` is the container healthcheck and is exempt from the login wall (and from Cloudflare Access via a Bypass policy).
+- Sign-on: Cloudflare Access (email one-time PIN) in front of the site, then the Django login. Records are deliberately not linked to user accounts (ADR 0008). See `docs/security.md`.
 
 ## Architecture
 

@@ -164,9 +164,11 @@ site is stateless and absent from `restic_paths`. That's no longer true:
 `/srv/state` is already in `restic_paths`, so `/srv/state/ella` is backed up
 without adding anything there. Only the exclude above and the hook are new.
 
-`monitoring/blackbox`: a probe of `https://ella.molder.app` follows the
-redirect to `/login/` and gets a 200, so it works as is. Probing
-`https://ella.molder.app/healthz/` instead would also check the DB.
+`monitoring/blackbox`: change the probe target to
+`https://ella.molder.app/healthz/`. Once Cloudflare Access is in front of the
+site ([security.md](security.md)), the bare URL redirects to Cloudflare's login
+page, so a probe there would only prove Cloudflare is up. `/healthz/` gets a
+Bypass policy in Access and also checks the DB.
 
 ---
 
@@ -241,8 +243,8 @@ curl -i localhost:8080/healthz/
   production. Use `docker exec -it -u app <container> python manage.py shell` to poke at
   data, or send `X-Forwarded-Proto: https` and pass cookies by hand with curl.
 
-## Hardening worth considering
+## Access control
 
-The login page and `/admin/` are on the public internet. Putting
-`ella.molder.app/admin/*` behind Cloudflare Access (free for small teams)
-removes it as a brute-force target without touching this code.
+Sign-on is Cloudflare Access in front of the site, plus the Django login.
+Setup and user management are in [security.md](security.md) and
+[operations.md](operations.md).

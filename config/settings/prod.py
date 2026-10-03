@@ -1,6 +1,6 @@
 """
 Production settings, used by the Docker image (see Dockerfile) on the home server.
-Secrets/config come from environment variables — see .env.example and deploy/DEPLOY.md.
+Secrets/config come from environment variables — see .env.example and docs/deployment.md.
 
 Request path: Cloudflare (TLS) -> cloudflared -> Caddy -> gunicorn in this container.
 """

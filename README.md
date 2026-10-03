@@ -16,7 +16,8 @@ config/                # project package
     wsgi.py
 core/                  # your first app — replace/extend with real features
     templates/core/home.html
-deploy/                # container entrypoint + deployment guide
+deploy/                # container entrypoint
+docs/                  # architecture, deployment, security, operations, ADRs
 Dockerfile             # production image, built by .github/workflows/build.yml
 requirements.txt
 .env.example           # copy to .env and fill in
@@ -60,4 +61,9 @@ needs no extra setup — good for building features locally.
 
 Pushing to `main` builds an image and pushes it to GHCR. The home-server
 repo pins its tag and runs it behind Caddy and a Cloudflare Tunnel. See
-`deploy/DEPLOY.md` for the full guide, including the changes home-server needs.
+`docs/deployment.md` for the full guide, including the changes home-server needs.
+
+## Documentation
+
+See [`docs/`](docs/README.md) for architecture, security and sign-on,
+operations, and the architecture decision records in [`docs/adr/`](docs/adr/README.md).

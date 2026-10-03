@@ -3,7 +3,7 @@ name: build
 
 # Builds the production image and pushes it to ghcr.io/ssschoubye/ella using
 # the home-server repo's reusable workflow. The run summary prints the tag to
-# pin as ella_site_image_tag in home-server. See deploy/DEPLOY.md.
+# pin as ella_site_image_tag in home-server. See docs/deployment.md.
 on:
   push:
     branches: [main]
