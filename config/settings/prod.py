@@ -1,24 +1,57 @@
 """
-Production settings, meant for the Hetzner server.
-Point DJANGO_SETTINGS_MODULE=config.settings.prod when deploying.
-All secrets/config here come from environment variables — see .env.example.
+Production settings, used by the Docker image (see Dockerfile) on the home server.
+Secrets/config come from environment variables — see .env.example and deploy/DEPLOY.md.
+
+Request path: Cloudflare (TLS) -> cloudflared -> Caddy -> gunicorn in this container.
 """
 from .base import *  # noqa: F401,F403
-from .base import env
+from .base import MIDDLEWARE, env
 
 DEBUG = False
 
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["ella.molder.app", "localhost", "127.0.0.1"])
+CSRF_TRUSTED_ORIGINS = env.list("DJANGO_CSRF_TRUSTED_ORIGINS", default=["https://ella.molder.app"])
 
-# Example: yourdomain.com,www.yourdomain.com
-CSRF_TRUSTED_ORIGINS = env.list("DJANGO_CSRF_TRUSTED_ORIGINS", default=[])
+# All state lives under one directory, bind-mounted from /srv/state/ella on the
+# server: the SQLite database, uploaded files and the backup snapshot that
+# `manage.py snapshot_db` writes before each restic run.
+DATA_DIR = env.path("DJANGO_DATA_DIR", default="/data")
 
 DATABASES = {
-    "default": env.db("DATABASE_URL"),  # e.g. postgres://user:pass@localhost:5432/dbname
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": DATA_DIR("db.sqlite3"),
+        "OPTIONS": {
+            # IMMEDIATE + a busy timeout avoids "database is locked" when two
+            # gunicorn workers write at once; WAL lets reads continue meanwhile.
+            "transaction_mode": "IMMEDIATE",
+            "timeout": 20,
+            "init_command": "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;",
+        },
+    }
 }
 
-# Basic hardening for serving over HTTPS behind Nginx.
+MEDIA_ROOT = DATA_DIR("media")
+
+# No Nginx in front: WhiteNoise serves the static files collected into the
+# image at build time. It must sit directly after SecurityMiddleware.
+MIDDLEWARE = MIDDLEWARE.copy()
+MIDDLEWARE.insert(MIDDLEWARE.index("django.middleware.security.SecurityMiddleware") + 1,
+                  "whitenoise.middleware.WhiteNoiseMiddleware")
+
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
+
+# Cloudflare terminates TLS and forces HTTPS at the edge; cloudflared sends
+# X-Forwarded-Proto: https and Caddy passes it through. Redirecting here as well
+# would break the container's plain-HTTP healthcheck, so it is off by default.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=False)
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
-SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
+
+# Both handled by Cloudflare at the edge (HSTS and "Always Use HTTPS"), so
+# `check --deploy` should not nag about them here.
+SILENCED_SYSTEM_CHECKS = ["security.W004", "security.W008"]

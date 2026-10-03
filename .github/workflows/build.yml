@@ -1,0 +1,31 @@
+---
+name: build
+
+# Builds the production image and pushes it to ghcr.io/ssschoubye/ella using
+# the home-server repo's reusable workflow. The run summary prints the tag to
+# pin as ella_site_image_tag in home-server. See deploy/DEPLOY.md.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python manage.py test
+
+  build:
+    needs: test
+    uses: ssschoubye/home-server/.github/workflows/build-site-image.yml@main
+    with:
+      image-name: ella
+    permissions:
+      contents: read
+      packages: write

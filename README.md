@@ -1,7 +1,7 @@
 # mysite
 
 A starter Django project: split settings for local development vs.
-production, ready to deploy to a Hetzner Cloud VPS when you get there.
+production, deployed as a container on the home server at https://ella.molder.app.
 
 ## Project layout
 
@@ -11,12 +11,13 @@ config/                # project package
     settings/
         base.py        # shared settings
         dev.py         # local development (SQLite, DEBUG=True) — default
-        prod.py         # production (Postgres, DEBUG=False) — used on the server
+        prod.py        # production (SQLite under /data, DEBUG=False) — used in the container
     urls.py
     wsgi.py
 core/                  # your first app — replace/extend with real features
     templates/core/home.html
-deploy/                # Nginx + systemd config templates, for later
+deploy/                # container entrypoint + deployment guide
+Dockerfile             # production image, built by .github/workflows/build.yml
 requirements.txt
 .env.example           # copy to .env and fill in
 ```
@@ -57,6 +58,6 @@ needs no extra setup — good for building features locally.
 
 ## Deploying
 
-See `deploy/DEPLOY.md` for the full checklist once you're ready to put
-this on your Hetzner server. Short version: Postgres + Gunicorn + Nginx +
-Certbot, with `config.settings.prod` reading everything from `.env`.
+Pushing to `main` builds an image and pushes it to GHCR. The home-server
+repo pins its tag and runs it behind Caddy and a Cloudflare Tunnel. See
+`deploy/DEPLOY.md` for the full guide, including the changes home-server needs.

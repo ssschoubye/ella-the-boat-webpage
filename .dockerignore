@@ -1,0 +1,12 @@
+.git
+.github
+venv
+**/__pycache__
+**/*.pyc
+.env
+db.sqlite3*
+media
+staticfiles
+Dockerfile
+.dockerignore
+CLAUDE.md

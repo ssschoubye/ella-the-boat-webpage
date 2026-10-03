@@ -1,12 +1,12 @@
 from django.contrib.auth.views import redirect_to_login
 from django.urls import reverse
 
-EXEMPT_PREFIXES = ("/admin/", "/static/")
+EXEMPT_PREFIXES = ("/admin/", "/static/", "/healthz/")
 
 
 class LoginRequiredMiddleware:
     """Require an authenticated session for every page except /admin/, static
-    files, and the login page itself."""
+    files, the health check, and the login page itself."""
 
     def __init__(self, get_response):
         self.get_response = get_response
