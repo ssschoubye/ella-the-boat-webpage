@@ -1,5 +1,6 @@
 from datetime import timedelta
 from io import StringIO
+from unittest import mock
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -10,6 +11,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from .forms import SignupForm
 from .models import Invitation
 
 User = get_user_model()
@@ -131,6 +133,59 @@ class SignupThroughInvitationTests(TestCase):
     def test_the_invitation_page_is_reachable_without_logging_in(self):
         invitation = Invitation.objects.create(label="Anton")
         self.assertEqual(self.client.get(invitation.get_absolute_url()).status_code, 200)
+
+
+class ConcurrentSignupTests(TestCase):
+    """A double-click on the signup button must not make two accounts.
+
+    Both requests can pass the view's `is_usable` check before either writes,
+    so the guard is the conditional UPDATE in `_claim`.
+    """
+
+    def test_losing_the_race_creates_no_account(self):
+        invitation = Invitation.objects.create(label="Anton")
+        real_save = SignupForm.save
+
+        def save_then_lose_the_race(form_self):
+            # Stand in for the other request winning in between: the link is
+            # spent after this form validated but before it claims it.
+            user = real_save(form_self)
+            invitation.accept(User.objects.create_user("winner@firma.dk"))
+            return user
+
+        with mock.patch.object(SignupForm, "save", save_then_lose_the_race):
+            response = self.client.post(invitation.get_absolute_url(), signup_post())
+
+        self.assertEqual(response.status_code, 410)
+        # The account from the losing request was rolled back with the
+        # transaction; only the winner's remains.
+        self.assertFalse(User.objects.filter(email="anton@firma.dk").exists())
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_the_winner_keeps_the_invitation(self):
+        invitation = Invitation.objects.create(label="Anton")
+
+        self.client.post(invitation.get_absolute_url(), signup_post())
+
+        invitation.refresh_from_db()
+        self.assertEqual(invitation.accepted_by, User.objects.get())
+
+    def test_a_colliding_address_is_a_form_error_not_a_500(self):
+        """clean_email may not see an account committed a moment earlier."""
+        invitation = Invitation.objects.create(label="Anton")
+        real_save = SignupForm.save
+
+        def save_after_someone_took_the_address(form_self):
+            User.objects.create_user("anton@firma.dk", email="anton@firma.dk")
+            return real_save(form_self)
+
+        with mock.patch.object(SignupForm, "save", save_after_someone_took_the_address):
+            response = self.client.post(invitation.get_absolute_url(), signup_post())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "allerede en konto")
+        invitation.refresh_from_db()
+        self.assertTrue(invitation.is_usable, "a collision must not spend the link")
 
 
 class SignupValidationTests(TestCase):
