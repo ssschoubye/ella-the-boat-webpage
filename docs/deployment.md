@@ -209,7 +209,14 @@ policy to arrange, because there is no Access ([ADR 0010](adr/0010-invitation-li
    ```bash
    docker exec -it -u app ella python manage.py createsuperuser
    ```
-   Give it the email address you want to log into `/admin/` with.
+   **Answer the `Username:` prompt with your email address**, not a short
+   name. Everywhere else the username *is* the email
+   ([ADR 0014](adr/0014-invite-links-and-passwords.md)), and the site's login
+   form is an email field -- so a superuser called `soren` can sign in at
+   `/admin/` but not at `/login/`. It still works, because an `/admin/` login
+   sets the same session and the rest of the site then accepts it, but it is a
+   confusing asymmetry for no benefit. Put the same address in the `Email
+   address:` prompt too.
 4. Invite yourself and walk the whole flow before sending anyone else a link:
    ```bash
    docker exec -it -u app ella python manage.py invite "Dig selv"

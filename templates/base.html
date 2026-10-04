@@ -21,9 +21,6 @@
                 </svg>
                 <span>Ella</span>
             </a>
-            {# The front page is public, so this header is also rendered for
-               visitors with no account. Showing them links they cannot open
-               would just produce a row of redirects to the login page. #}
             <div class="site-header__right">
                 {% if user.is_authenticated %}
                     <nav class="nav">

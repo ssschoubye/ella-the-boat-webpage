@@ -95,8 +95,23 @@ docker exec -it -u app ella python manage.py axes_reset
 ```
 
 The first admin account is created with `createsuperuser`
-([deployment.md](deployment.md#first-deploy)). Give it the email address you
-want to log into `/admin/` with.
+([deployment.md](deployment.md#first-deploy)). Answer its `Username:` prompt
+with an **email address**: the username is the login identifier everywhere
+else, and `/login/` is an email field, so a superuser named `soren` can only
+get in via `/admin/`.
+
+To check what you ended up with:
+
+```bash
+docker exec -u app ella python manage.py list_people
+```
+
+If the superuser's username is not an email address, rename it. Nothing
+references the username, so this is safe:
+
+```bash
+docker exec -u app ella python manage.py rename_login soren soren@example.com
+```
 
 ## Logs and health
 
