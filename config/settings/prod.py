@@ -9,6 +9,12 @@ from .base import MIDDLEWARE, env
 
 DEBUG = False
 
+# No default, unlike base.py. If /etc/home-server/ella.env is missing or does
+# not contain the key, the container must fail to start -- the alternative is
+# serving production with base.py's "django-insecure-change-me-in-.env", which
+# would sign session cookies with a value that is public in this repo.
+SECRET_KEY = env("DJANGO_SECRET_KEY")
+
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["ella.molder.app", "localhost", "127.0.0.1"])
 CSRF_TRUSTED_ORIGINS = env.list("DJANGO_CSRF_TRUSTED_ORIGINS", default=["https://ella.molder.app"])
 
