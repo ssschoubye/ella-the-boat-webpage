@@ -13,9 +13,12 @@ set the old one's status to `Superseded by ADR-NNNN`.
 | [0004](0004-serve-static-files-with-whitenoise.md) | Serve static files with WhiteNoise from the image | Accepted |
 | [0005](0005-tls-and-https-redirect-at-cloudflare.md) | TLS and HTTPS redirects at Cloudflare | Accepted |
 | [0006](0006-site-wide-login-wall-and-private-uploads.md) | Site-wide login wall and private uploads | Accepted |
-| [0007](0007-cloudflare-access-in-front-of-the-site.md) | Cloudflare Access in front of the site | Accepted |
-| [0008](0008-records-are-not-linked-to-user-accounts.md) | Records are not linked to user accounts (for now) | Accepted |
+| [0007](0007-cloudflare-access-in-front-of-the-site.md) | Cloudflare Access in front of the site | Superseded by 0010 |
+| [0008](0008-records-are-not-linked-to-user-accounts.md) | Records are not linked to user accounts (for now) | Superseded by 0011 |
 | [0009](0009-self-hosted-identity-provider-deferred.md) | Self-hosted identity provider: deferred, and not Keycloak | Deferred |
+| [0010](0010-invitation-links-and-google-sign-in.md) | Invitation links and Google sign-in, instead of Cloudflare Access | Accepted |
+| [0011](0011-records-linked-to-accounts.md) | Records are linked to accounts | Accepted |
+| [0012](0012-public-front-page.md) | A public front page | Accepted |
 
 ## Writing a new one
 

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load people %}
 
 {% block title %}Arkiv &middot; Vedligehold &middot; Ella{% endblock %}
 
@@ -27,7 +28,7 @@
                 <p class="board-archive__meta">
                     {{ ticket.get_status_display }}
                     &middot; arkiveret {{ ticket.archived_at|date:"j. M Y" }}
-                    {% if ticket.created_by %}&middot; {{ ticket.get_created_by_display }}{% endif %}
+                    {% if ticket.created_by %}&middot; {{ ticket.created_by|person }}{% endif %}
                 </p>
             </div>
             <form method="post" action="{% url 'vedligehold_ticket_reopen' ticket.pk %}">

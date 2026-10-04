@@ -36,7 +36,8 @@ pip install -r requirements.txt
 cp .env.example .env            # then edit .env if you want, defaults are fine for local dev
 
 python manage.py migrate
-python manage.py createsuperuser   # optional, for /admin/
+python manage.py createsuperuser   # for /admin/; use your own Google address
+python manage.py invite "Dig selv"   # prints an invitation link to sign up with
 python manage.py runserver
 ```
 

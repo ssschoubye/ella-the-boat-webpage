@@ -32,6 +32,10 @@ Environment variables (defaults are right for `ella.molder.app`):
 | Variable | Default | Notes |
 |---|---|---|
 | `DJANGO_SECRET_KEY` | — | **Required.** Comes from sops |
+| `GOOGLE_OAUTH_CLIENT_ID` | — | **Required**, or nobody can sign in. From sops; see [security.md](security.md#google-oauth-client) |
+| `GOOGLE_OAUTH_CLIENT_SECRET` | — | **Required.** Same place |
+| `DJANGO_PUBLIC_BASE_URL` | `https://ella.molder.app` | What invitation links are built from. A management command has no request to derive a host from |
+| `DJANGO_INVITATION_VALID_DAYS` | `30` | How long a new invitation link stays usable |
 | `DJANGO_ALLOWED_HOSTS` | `ella.molder.app,localhost,127.0.0.1` | localhost is needed for the healthcheck |
 | `DJANGO_CSRF_TRUSTED_ORIGINS` | `https://ella.molder.app` | |
 | `DJANGO_DATA_DIR` | `/data` | |
@@ -56,7 +60,7 @@ services:
     networks:
       - edge
     env_file:
-      - ${CONFIG_ROOT:?set in .env}/ella.env      # DJANGO_SECRET_KEY, from secrets/ella.sops.yaml
+      - ${CONFIG_ROOT:?set in .env}/ella.env      # Django key + Google OAuth, from secrets/ella.sops.yaml
     volumes:
       - ${STATE_ROOT:?set in .env}/ella:/data     # SQLite DB, uploads, backup snapshot
     read_only: true
@@ -132,9 +136,13 @@ Back up the snapshot, not the live database, by adding this to
 #   python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
 
 DJANGO_SECRET_KEY: CHANGE_ME_ELLA_DJANGO_SECRET_KEY
+GOOGLE_OAUTH_CLIENT_ID: CHANGE_ME_GOOGLE_OAUTH_CLIENT_ID
+GOOGLE_OAUTH_CLIENT_SECRET: CHANGE_ME_GOOGLE_OAUTH_CLIENT_SECRET
 ```
 
-Rotating it logs everyone out and nothing else.
+Rotating the Django key logs everyone out and nothing else. The Google
+credentials come from [security.md](security.md#google-oauth-client); without
+them the site runs but nobody can sign in.
 
 ### 4. Backup pre-hook
 
@@ -165,10 +173,10 @@ site is stateless and absent from `restic_paths`. That's no longer true:
 without adding anything there. Only the exclude above and the hook are new.
 
 `monitoring/blackbox`: change the probe target to
-`https://ella.molder.app/healthz/`. Once Cloudflare Access is in front of the
-site ([security.md](security.md)), the bare URL redirects to Cloudflare's login
-page, so a probe there would only prove Cloudflare is up. `/healthz/` gets a
-Bypass policy in Access and also checks the DB.
+`https://ella.molder.app/healthz/`. The front page would also answer 200 now
+that it is public ([ADR 0012](adr/0012-public-front-page.md)), but `/healthz/`
+touches the database, so it proves rather more. There is no Access Bypass
+policy to arrange, because there is no Access ([ADR 0010](adr/0010-invitation-links-and-google-sign-in.md)).
 
 ---
 
@@ -189,12 +197,25 @@ Bypass policy in Access and also checks the DB.
    `SITE_IMAGE_TAG=sha-…` from the run summary.
 2. In home-server, set `ella_site_image_tag`, make the changes above, commit,
    `make deploy SERVICE=ella`.
-3. Create the first login:
+3. Create the break-glass admin. Use **your own Google address**: signing in
+   with Google later attaches to this same account instead of making a
+   second one.
    ```bash
    docker exec -it -u app ella python manage.py createsuperuser
    ```
-   Other accounts can then be added at `https://ella.molder.app/admin/`.
-4. `curl -I https://ella.molder.app/healthz/` should return `200`.
+4. Invite yourself, and check the whole flow end to end before sending
+   anyone else a link:
+   ```bash
+   docker exec -it -u app ella python manage.py invite "Dig selv"
+   ```
+   Open the printed link in a private window and press "Fortsæt med
+   Google". If Google shows `redirect_uri_mismatch`, the redirect URI on
+   the OAuth client is wrong — see
+   [security.md](security.md#google-oauth-client).
+5. Invite the rest of the group from `/admin/`
+   ([operations.md](operations.md#adding-a-person)).
+6. `curl -I https://ella.molder.app/healthz/` should return `200`, and
+   `curl -I https://ella.molder.app/` should return `200` rather than a 302.
 
 **Bringing over local data instead** (optional, before step 2's first start,
 or with the container stopped):
@@ -245,6 +266,13 @@ curl -i localhost:8080/healthz/
 
 ## Access control
 
-Sign-on is Cloudflare Access in front of the site, plus the Django login.
-Setup and user management are in [security.md](security.md) and
-[operations.md](operations.md).
+Sign-on is Google, with sign-up gated on a single-use invitation link, and no
+Cloudflare Access ([ADR 0010](adr/0010-invitation-links-and-google-sign-in.md)).
+The one-time Google OAuth client setup is in
+[security.md](security.md#google-oauth-client); inviting and removing people is
+in [operations.md](operations.md#adding-a-person).
+
+If an old Cloudflare Access application still covers `ella.molder.app`,
+**delete it**. While it exists every request is intercepted and the site
+answers `302` to `<team>.cloudflareaccess.com`, which looks exactly like a
+tunnel fault.

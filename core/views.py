@@ -4,6 +4,14 @@ from django.shortcuts import render
 
 
 def home(request):
+    """The one page that is public (ADR 0012).
+
+    Anonymous visitors get the landing page; everyone signed in gets the real
+    start page with the links into the site. Same URL either way, so nobody's
+    bookmark changes and there is no redirect to notice.
+    """
+    if not request.user.is_authenticated:
+        return render(request, "core/landing.html")
     return render(request, "core/home.html")
 
 

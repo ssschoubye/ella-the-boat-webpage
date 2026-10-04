@@ -1,11 +1,12 @@
 from django.contrib import admin
-from django.contrib.auth import views as auth_views
 from django.urls import include, path
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("login/", auth_views.LoginView.as_view(template_name="registration/login.html"), name="login"),
-    path("logout/", auth_views.LogoutView.as_view(), name="logout"),
+    # Sign-on. allauth owns /accounts/login/, the Google callback and logout;
+    # adgang owns the invitation links that allow a signup at all.
+    path("accounts/", include("allauth.urls")),
+    path("", include("adgang.urls")),
     path("kalender/", include("booking.urls")),
     path("filarkiv/", include("filarkiv.urls")),
     path("vedligehold/", include("vedligehold.urls")),

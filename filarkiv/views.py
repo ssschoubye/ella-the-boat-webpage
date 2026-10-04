@@ -28,7 +28,11 @@ def upload_file(request):
     if request.method == "POST":
         form = ArchiveFileForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
+            # save(commit=False) still fills in a missing title from the
+            # filename; see ArchiveFileForm.save.
+            archive_file = form.save(commit=False)
+            archive_file.uploaded_by = request.user
+            archive_file.save()
             return redirect("filarkiv")
     else:
         form = ArchiveFileForm()

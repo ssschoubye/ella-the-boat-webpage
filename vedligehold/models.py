@@ -1,9 +1,8 @@
 from datetime import timedelta
 
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
-
-from booking.models import BOOKER_CHOICES
 
 SWEEP_AFTER = timedelta(days=30)
 
@@ -32,7 +31,14 @@ class Ticket(models.Model):
     title = models.CharField("Titel", max_length=200)
     description = models.TextField("Beskrivelse", blank=True)
     status = models.CharField("Status", max_length=20, choices=STATUS_CHOICES, default=STATUS_ONSKE)
-    created_by = models.CharField("Oprettet af", max_length=20, choices=BOOKER_CHOICES, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="Oprettet af",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tickets",
+    )
     created_at = models.DateTimeField("Oprettet", auto_now_add=True)
     updated_at = models.DateTimeField("Opdateret", auto_now=True)
     completed_at = models.DateTimeField(null=True, blank=True)
@@ -65,7 +71,14 @@ class Ticket(models.Model):
 
 class Comment(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name="comments")
-    author = models.CharField("Fra", max_length=20, choices=BOOKER_CHOICES, blank=True)
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="Fra",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="ticket_comments",
+    )
     text = models.TextField("Kommentar")
     created_at = models.DateTimeField("Oprettet", auto_now_add=True)
 

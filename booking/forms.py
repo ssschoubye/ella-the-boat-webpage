@@ -33,13 +33,14 @@ class BookingForm(forms.ModelForm):
 
     class Meta:
         model = Booking
-        fields = ["title", "booker", "start_date", "end_date", "notes"]
+        # No "booker" field: the view sets it to whoever is signed in, so
+        # nobody picks their own name off a list any more (ADR 0011).
+        fields = ["title", "start_date", "end_date", "notes"]
         widgets = {
             "notes": forms.Textarea(attrs={"rows": 3}),
         }
         labels = {
             "title": "Titel",
-            "booker": "Booker",
             "notes": "Noter",
         }
 

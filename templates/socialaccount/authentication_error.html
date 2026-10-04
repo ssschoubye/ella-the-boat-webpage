@@ -1,0 +1,15 @@
+{% extends "card_base.html" %}
+
+{% block title %}Login mislykkedes &middot; Ella{% endblock %}
+
+{% block card %}
+<p class="card-page__error">Login gennem Google mislykkedes.</p>
+
+<p class="card-page__lead">
+    Det kan skyldes, at du afbrød undervejs, eller at linket var for gammelt.
+</p>
+
+<p class="card-page__note">
+    <a href="{% url 'account_login' %}">Prøv igen</a>
+</p>
+{% endblock %}

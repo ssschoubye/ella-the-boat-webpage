@@ -21,19 +21,26 @@
                 </svg>
                 <span>Ella</span>
             </a>
+            {# The front page is public, so this header is also rendered for
+               visitors with no account. Showing them links they cannot open
+               would just produce a row of redirects to the login page. #}
             <div class="site-header__right">
-                <nav class="nav">
-                    <a href="{% url 'home' %}">Forside</a>
-                    <a href="{% url 'kalender' %}">Kalender</a>
-                    <a href="{% url 'logbog' %}">Logbog</a>
-                    <a href="{% url 'filarkiv' %}">Filarkiv</a>
-                    <a href="{% url 'vedligehold' %}">Vedligehold</a>
-                    <a href="{% url 'skader' %}">Skader</a>
-                </nav>
-                <form method="post" action="{% url 'logout' %}" class="logout-form">
-                    {% csrf_token %}
-                    <button type="submit" class="logout-button">Log ud</button>
-                </form>
+                {% if user.is_authenticated %}
+                    <nav class="nav">
+                        <a href="{% url 'home' %}">Forside</a>
+                        <a href="{% url 'kalender' %}">Kalender</a>
+                        <a href="{% url 'logbog' %}">Logbog</a>
+                        <a href="{% url 'filarkiv' %}">Filarkiv</a>
+                        <a href="{% url 'vedligehold' %}">Vedligehold</a>
+                        <a href="{% url 'skader' %}">Skader</a>
+                    </nav>
+                    <form method="post" action="{% url 'account_logout' %}" class="logout-form">
+                        {% csrf_token %}
+                        <button type="submit" class="logout-button">Log ud</button>
+                    </form>
+                {% else %}
+                    <a class="logout-button logout-button--link" href="{% url 'account_login' %}">Log ind</a>
+                {% endif %}
             </div>
         </div>
     </header>

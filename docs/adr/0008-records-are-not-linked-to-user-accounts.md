@@ -1,6 +1,6 @@
 # 0008. Records are not linked to user accounts (for now)
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0011](0011-records-linked-to-accounts.md)
 - **Date:** 2026-10-03
 
 ## Context

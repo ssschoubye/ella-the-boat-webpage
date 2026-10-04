@@ -1,6 +1,6 @@
 # 0007. Cloudflare Access in front of the site
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0010](0010-invitation-links-and-google-sign-in.md)
 - **Date:** 2026-10-03
 
 ## Context

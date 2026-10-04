@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load people %}
 
 {% block title %}Filarkiv &middot; Ella{% endblock %}
 
@@ -27,7 +28,7 @@
                 <p class="archive__title">{{ f.title }}</p>
                 <p class="archive__meta">
                     {{ f.uploaded_at|date:"j. M Y" }}
-                    {% if f.uploaded_by %}&middot; {{ f.get_uploaded_by_display }}{% endif %}
+                    {% if f.uploaded_by %}&middot; {{ f.uploaded_by|person }}{% endif %}
                     &middot; {{ f.file.size|filesizeformat }}
                 </p>
                 {% if f.description %}<p class="archive__description">{{ f.description }}</p>{% endif %}

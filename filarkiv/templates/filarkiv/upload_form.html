@@ -26,12 +26,6 @@
     </div>
 
     <div class="form-field">
-        <label for="{{ form.uploaded_by.id_for_label }}">{{ form.uploaded_by.label }}</label>
-        {{ form.uploaded_by }}
-        {% if form.uploaded_by.errors %}<p class="form-field__errors">{{ form.uploaded_by.errors|join:", " }}</p>{% endif %}
-    </div>
-
-    <div class="form-field">
         <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
         {{ form.description }}
         {% if form.description.errors %}<p class="form-field__errors">{{ form.description.errors|join:", " }}</p>{% endif %}

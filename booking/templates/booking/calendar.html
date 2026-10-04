@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load people %}
 {% load static booking_extras %}
 
 {% block title %}Kalender &middot; Ella{% endblock %}
@@ -35,9 +36,9 @@
             {% for entry in day.entries %}
             <button type="button"
                class="calendar__booking js-event-trigger{% if entry.is_multi_day %} calendar__booking--multi{% endif %}{% if not entry.is_run_start %} calendar__booking--continues-left{% endif %}{% if not entry.is_run_end %} calendar__booking--continues-right{% endif %}"
-               title="{{ entry.booking.title }} &middot; {{ entry.booking.get_booker_display }}"
+               title="{{ entry.booking.title }} &middot; {{ entry.booking.booker|person }}"
                data-title="{{ entry.booking.title }}"
-               data-booker="{{ entry.booking.get_booker_display }}"
+               data-booker="{{ entry.booking.booker|person }}"
                data-start="{{ entry.booking.start_date|danish_datetime }}"
                data-end="{{ entry.booking.end_date|danish_datetime }}"
                data-notes="{{ entry.booking.notes }}"
@@ -64,7 +65,7 @@
         <li class="upcoming__item">
             <button type="button" class="upcoming__item-trigger js-event-trigger{% if booking.end_date.date != booking.start_date.date %} upcoming__item-trigger--multi{% endif %}"
                     data-title="{{ booking.title }}"
-                    data-booker="{{ booking.get_booker_display }}"
+                    data-booker="{{ booking.booker|person }}"
                     data-start="{{ booking.start_date|danish_datetime }}"
                     data-end="{{ booking.end_date|danish_datetime }}"
                     data-notes="{{ booking.notes }}"
@@ -73,7 +74,7 @@
                     {% if booking.end_date.date != booking.start_date.date %}{{ booking.start_date|date:"j. M H:i" }}&ndash;{{ booking.end_date|date:"j. M H:i" }}{% else %}{{ booking.start_date|date:"j. M H:i" }}&ndash;{{ booking.end_date|date:"H:i" }}{% endif %}
                 </span>
                 <span class="upcoming__title">{{ booking.title }}</span>
-                <span class="upcoming__booker">{{ booking.get_booker_display }}</span>
+                <span class="upcoming__booker">{{ booking.booker|person }}</span>
             </button>
         </li>
         {% endfor %}

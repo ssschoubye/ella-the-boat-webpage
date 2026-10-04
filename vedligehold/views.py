@@ -61,6 +61,7 @@ def ticket_create(request):
         form = TicketForm(request.POST)
         if form.is_valid():
             ticket = form.save(commit=False)
+            ticket.created_by = request.user
             if ticket.status == STATUS_FAERDIG:
                 ticket.completed_at = timezone.now()
             ticket.save()
@@ -77,6 +78,7 @@ def ticket_detail(request, pk):
         if form.is_valid():
             comment = form.save(commit=False)
             comment.ticket = ticket
+            comment.author = request.user
             comment.save()
             return redirect("vedligehold_ticket_detail", pk=ticket.pk)
     else:

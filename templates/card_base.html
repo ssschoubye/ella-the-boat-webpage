@@ -1,39 +1,30 @@
+{% load static %}
 <!DOCTYPE html>
+{# Standalone shell for the sign-on pages. Deliberately not base.html: that
+   one carries the signed-in navigation, which nobody reaching these pages
+   has access to yet. #}
 <html lang="da">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Log ind &middot; Ella</title>
+    <title>{% block title %}Ella{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% load static %}{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body class="login-page">
     <div class="login-card">
-        <div class="brand login-card__brand">
+        <a class="brand login-card__brand" href="/">
             <svg class="brand__mark" viewBox="0 0 48 48" aria-hidden="true">
                 <path d="M6 30c4 6 10 9 18 9s14-3 18-9l-3-1c-2 5-8 8-15 8s-13-3-15-8z" fill="currentColor"/>
                 <path d="M24 6v20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                 <path d="M24 8c6 1 10 5 12 11l-12 4z" fill="currentColor" opacity="0.85"/>
             </svg>
             <span>Ella</span>
-        </div>
+        </a>
 
-        {% if form.errors %}
-        <p class="login-card__error">Forkert brugernavn eller adgangskode.</p>
-        {% endif %}
-
-        <form method="post" class="login-form">
-            {% csrf_token %}
-            <label for="id_username">Brugernavn</label>
-            <input type="text" name="username" id="id_username" autofocus required>
-            <label for="id_password">Adgangskode</label>
-            <input type="password" name="password" id="id_password" required>
-            <input type="hidden" name="next" value="{{ next }}">
-            <button type="submit">Log ind</button>
-        </form>
+        {% block card %}{% endblock %}
     </div>
-    <script src="{% static 'js/scroll-restore.js' %}"></script>
 </body>
 </html>

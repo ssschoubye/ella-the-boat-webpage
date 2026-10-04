@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Ella{% endblock %}
+
+{% comment %}
+The public front page (ADR 0012). Everything else on the site is behind the
+login wall, so this is the one page an anonymous visitor sees: it says what
+Ella is and offers the way in. Keep it free of anything about the boat that
+the group would not put on a postcard -- no names, no documents, no plans.
+{% endcomment %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero__inner">
+        <p class="hero__eyebrow">Velkommen ombord</p>
+        <h1>Ella</h1>
+        <p>En lille, privat side for os, der deler båden &mdash; kalender, filarkiv og vedligehold samlet ét sted.</p>
+        <a class="hero__cta" href="{% url 'account_login' %}">Log ind</a>
+    </div>
+    <svg class="hero__waves" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true">
+        <path fill="currentColor" d="M0,40 C240,80 480,0 720,40 C960,80 1200,0 1440,40 L1440,80 L0,80 Z"/>
+    </svg>
+</section>
+
+<section class="sections">
+    <div class="landing-note">
+        <h2>Siden er privat</h2>
+        <p>
+            Indholdet er kun for bådlauget, så der er ingen offentlig
+            visning af kalender eller filer. Hører du til og mangler du
+            adgang, skal du have et invitationslink fra en af de andre
+            &mdash; så opretter du din konto med Google på et par sekunder.
+        </p>
+    </div>
+</section>
+{% endblock %}

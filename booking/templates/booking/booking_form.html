@@ -30,12 +30,6 @@
     </div>
 
     <div class="form-field">
-        <label for="{{ form.booker.id_for_label }}">{{ form.booker.label }}</label>
-        {{ form.booker }}
-        {% if form.booker.errors %}<p class="form-field__errors">{{ form.booker.errors|join:", " }}</p>{% endif %}
-    </div>
-
-    <div class="form-field">
         <label for="{{ form.start_date.id_for_label }}">{{ form.start_date.label }}</label>
         {{ form.start_date }}
         {% if form.start_date.errors %}<p class="form-field__errors">{{ form.start_date.errors|join:", " }}</p>{% endif %}

@@ -24,12 +24,6 @@
     </div>
 
     <div class="form-field">
-        <label for="{{ form.created_by.id_for_label }}">{{ form.created_by.label }}</label>
-        {{ form.created_by }}
-        {% if form.created_by.errors %}<p class="form-field__errors">{{ form.created_by.errors|join:", " }}</p>{% endif %}
-    </div>
-
-    <div class="form-field">
         <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
         {{ form.description }}
         {% if form.description.errors %}<p class="form-field__errors">{{ form.description.errors|join:", " }}</p>{% endif %}

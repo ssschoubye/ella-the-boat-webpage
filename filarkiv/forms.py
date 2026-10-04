@@ -10,14 +10,14 @@ MAX_UPLOAD_SIZE = 25 * 1024 * 1024  # 25 MB
 class ArchiveFileForm(forms.ModelForm):
     class Meta:
         model = ArchiveFile
-        fields = ["file", "title", "uploaded_by", "description"]
+        # No "uploaded_by": the view sets it from the session (ADR 0011).
+        fields = ["file", "title", "description"]
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
         }
         labels = {
             "file": "Fil",
             "title": "Titel",
-            "uploaded_by": "Uploadet af",
             "description": "Beskrivelse",
         }
 

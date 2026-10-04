@@ -10,13 +10,14 @@ Django 5.2 app with Danish UI, used by about six people.
 browser
   │ HTTPS
   ▼
-Cloudflare edge ─── Cloudflare Access: email one-time PIN (ADR 0007)
-  │                 TLS, "Always Use HTTPS", HSTS (ADR 0005)
+Cloudflare edge ─── TLS, "Always Use HTTPS", HSTS (ADR 0005)
+  │                 No Access/Zero Trust in front any more (ADR 0010)
   │ Cloudflare Tunnel (outbound from the server; no open ports)
   ▼
 cloudflared ──http──▶ Caddy ──http──▶ ella container :80
                      (shared,        gunicorn, 2 workers
-                      all sites)     Django login wall (ADR 0006)
+                      all sites)     Google sign-in, invite-only (ADR 0010)
+                                     Login wall, public "/" (ADR 0006, 0012)
                                        │
                                        ▼
                               /data  ◀── bind mount ── /srv/state/ella
@@ -32,14 +33,16 @@ repo. This repo owns only the image.
 
 | App | URL | What it does |
 |---|---|---|
-| `core` | `/`, `/healthz/` | Home page, placeholder pages, the login-wall middleware, the health check, `snapshot_db` |
+| `core` | `/`, `/healthz/` | Public front page and signed-in start page, placeholder pages, the login-wall middleware, the health check, `snapshot_db` |
+| `adgang` | `/invitation/<token>/` | Single-use invitation links and the allauth adapters that make sign-up invite-only ([ADR 0010](adr/0010-invitation-links-and-google-sign-in.md)) |
 | `booking` | `/kalender/` | Month/week/list calendar of trips; repeating trips are stored as separate rows sharing a `series_id` |
 | `filarkiv` | `/filarkiv/` | Upload, search and download files (max 25 MB); only downloadable through a logged-in view |
 | `vedligehold` | `/vedligehold/` | Maintenance tickets on a board with comments; finished tickets archive themselves after 30 days |
 
-All three feature apps record "who" by picking from the hardcoded
-`BOOKER_CHOICES` list, not the logged-in account
-([ADR 0008](adr/0008-records-are-not-linked-to-user-accounts.md)).
+All three feature apps record "who" as a foreign key to the signed-in
+account, set by the view and absent from the forms
+([ADR 0011](adr/0011-records-linked-to-accounts.md)). Templates render one
+through the `person` filter in `core/templatetags/people.py`.
 
 ## Settings
 

@@ -188,6 +188,9 @@ def add_booking(request):
         form = BookingForm(request.POST)
         if form.is_valid():
             booking = form.save(commit=False)
+            # Whoever is signed in is the booker. It is no longer a dropdown,
+            # so the recorded name is always the real one (ADR 0011).
+            booking.booker = request.user
             repeat_type = form.cleaned_data.get("repeat_type") or "none"
             repeat_count = form.cleaned_data.get("repeat_count") or 1
 

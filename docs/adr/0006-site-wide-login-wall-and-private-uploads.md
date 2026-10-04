@@ -1,6 +1,7 @@
 # 0006. Site-wide login wall and private uploads
 
-- **Status:** Accepted (recorded retroactively; in place since v1.0, 2026-09-17)
+- **Status:** Accepted (recorded retroactively; in place since v1.0, 2026-09-17),
+  amended by [ADR-0012](0012-public-front-page.md): the front page is public
 - **Date:** 2026-10-03
 
 ## Context
@@ -26,3 +27,6 @@ must not be reachable by a guessable URL.
   script in the site's origin.
 - This layer stays in place under Cloudflare Access ([0007](0007-cloudflare-access-in-front-of-the-site.md)).
   The two are independent defences.
+- Access was later removed ([0010](0010-invitation-links-and-google-sign-in.md)),
+  which makes this the outer defence rather than the inner one, and the
+  front page was made public ([0012](0012-public-front-page.md)).

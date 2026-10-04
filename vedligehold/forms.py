@@ -6,7 +6,9 @@ from .models import Comment, Ticket
 class TicketForm(forms.ModelForm):
     class Meta:
         model = Ticket
-        fields = ["title", "description", "status", "created_by"]
+        # No "created_by"/"author": the views set them from the session
+        # (ADR 0011).
+        fields = ["title", "description", "status"]
         widgets = {
             "description": forms.Textarea(attrs={"rows": 4}),
         }
@@ -14,19 +16,17 @@ class TicketForm(forms.ModelForm):
             "title": "Titel",
             "description": "Beskrivelse",
             "status": "Status",
-            "created_by": "Oprettet af",
         }
 
 
 class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment
-        fields = ["author", "text"]
+        fields = ["text"]
         widgets = {
             "text": forms.Textarea(attrs={"rows": 3, "placeholder": "Skriv en kommentar…"}),
         }
         labels = {
-            "author": "Fra",
             "text": "Kommentar",
         }
 

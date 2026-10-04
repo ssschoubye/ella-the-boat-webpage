@@ -48,6 +48,13 @@ STORAGES = {
 # X-Forwarded-Proto: https and Caddy passes it through. Redirecting here as well
 # would break the container's plain-HTTP healthcheck, so it is off by default.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# allauth builds the Google callback URL with request.build_absolute_uri, so
+# the header above is what actually makes it https. This is belt and braces
+# for the paths that consult the setting instead, and it has to be https or
+# Google rejects the redirect_uri as not matching the registered one.
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
+
 SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=False)
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True

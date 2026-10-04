@@ -24,7 +24,7 @@ python manage.py test booking.tests.SomeTestCase.test_method   # single test
 docker build -t ella:test .                      # production image (see docs/deployment.md to run it)
 ```
 
-`manage.py` defaults to `config.settings.dev` (SQLite, DEBUG=True). There is no linter config; tests exist only in `core/tests.py`.
+`manage.py` defaults to `config.settings.dev` (SQLite, DEBUG=True). There is no linter config. Tests live in `core`, `adgang`, `booking`, `filarkiv` and `vedligehold`.
 
 ## Documentation
 
@@ -37,16 +37,19 @@ Production is a Docker container on the user's home server, managed by the separ
 - Traffic: Cloudflare (TLS) → cloudflared → Caddy → gunicorn on port 80. `config.settings.prod` trusts `X-Forwarded-Proto` and deliberately doesn't redirect to HTTPS (Cloudflare does it).
 - All state lives in `DJANGO_DATA_DIR` (`/data`, bind-mounted from `/srv/state/ella`): SQLite DB, `media/`, and `backups/db.sqlite3`, written by `manage.py snapshot_db` from restic's pre-backup hook. The root filesystem is read-only; static files are collected at build time and served by WhiteNoise (enabled in prod settings only).
 - `deploy/entrypoint.sh` chowns `/data` as root, drops to user `app` (uid 10001), runs `migrate`, then starts gunicorn. Migrations therefore run on every deploy.
-- `/healthz/` is the container healthcheck and is exempt from the login wall (and from Cloudflare Access via a Bypass policy).
-- Sign-on: Cloudflare Access (email one-time PIN) in front of the site, then the Django login. Records are deliberately not linked to user accounts (ADR 0008). See `docs/security.md`.
+- `/healthz/` is the container healthcheck and is exempt from the login wall. There is no Cloudflare Access in front of the site (ADR 0010); if one exists in the dashboard it must be deleted, or every request 302s to `cloudflareaccess.com`.
+- Sign-on: **Google only, sign-up gated on a single-use invitation link** (ADR 0010). No passwords except the `/admin/` superuser, which django-axes locks out after 5 failures. `GOOGLE_OAUTH_CLIENT_ID`/`_SECRET` come from sops; without them the site runs but nobody can sign in. See `docs/security.md`.
+- `/` is public (ADR 0012); everything else needs a session. Records are linked to the signed-in account (ADR 0011).
 
 ## Architecture
 
 - **Settings:** `config/settings/base.py` is shared; `dev.py` / `prod.py` override DB, DEBUG, hosts, static storage and HTTPS hardening.
-- **Site-wide login wall:** `core.middleware.LoginRequiredMiddleware` forces authentication on every path except `/admin/`, `/static/`, `/healthz/`, and the login page. Views therefore don't use `@login_required` — new views are protected automatically.
-- **Shared "people" list:** `booking.models.BOOKER_CHOICES` is the fixed list of group members (hardcoded, not tied to Django `User`). It's imported by `filarkiv` (`uploaded_by`) and `vedligehold` (`created_by`, comment `author`). Changing it affects all three apps.
+- **Login wall:** `core.middleware.LoginRequiredMiddleware` forces authentication on every path except the `EXEMPT_PREFIXES` (`/admin/`, `/static/`, `/healthz/`, `/accounts/`, `/invitation/`) and the `EXEMPT_PATHS` exact matches (`/`). The two lists are separate because `"/"` as a prefix would exempt the whole site. Views therefore don't use `@login_required` — new views are protected automatically.
+- **Sign-on (`adgang`):** `Invitation` is a single-use, expiring, revocable link. `views.invitation` parks the token in the session; `adapters.InvitationOnlySocialAccountAdapter.is_open_for_signup` allows a signup only while a usable one is held, and `save_user` spends it. `pre_social_login` attaches Google to an existing account with the same **verified** email, which is what lets the `createsuperuser` admin use the owner's own Google address. Mint links in `/admin/` or with `manage.py invite "<name>"`.
+- **"Who" fields are accounts:** `Booking.booker`, `ArchiveFile.uploaded_by`, `Ticket.created_by` and `Comment.author` are `ForeignKey`s to the user model with `SET_NULL`, set by the view from `request.user` and **absent from the forms** — don't add them back, there are tests pinning that. Render one with the `person` filter (`core/templatetags/people.py`), which falls back to the email local part and to "Ukendt".
 - **Apps** (mounted in `config/urls.py`):
-  - `core` — home page plus placeholder pages (`logbog`, `skader`) rendered via `core/placeholder.html` for not-yet-built features.
+  - `core` — the front page (public landing for anonymous visitors, start page when signed in) plus placeholder pages (`logbog`, `skader`) rendered via `core/placeholder.html` for not-yet-built features, the login-wall middleware, and the `person` template filter.
+  - `adgang` (`/invitation/<token>/`) — invitation links and the allauth adapters. See the sign-on note above.
   - `booking` (`/kalender/`) — boat calendar with month/week/list views. Recurring bookings are materialized as separate `Booking` rows sharing a `series_id` UUID (created via `bulk_create` in `add_booking`; `_shift_datetime`/`_add_months` compute occurrences). `delete_series` removes all rows with that `series_id`. `templatetags/booking_extras.py` provides the `danish_datetime` filter.
   - `filarkiv` (`/filarkiv/`) — file archive. Uploads go to `MEDIA_ROOT/filarkiv/<uuid>/<filename>`. There is intentionally **no `MEDIA_URL`** and nothing serves media directly: files are only reachable through the `download_file` view so they stay behind the login wall. Deleting a record must also delete the file (`file.delete(save=False)`).
   - `vedligehold` (`/vedligehold/`) — kanban-style maintenance ticket board with comments. Status changes go through `Ticket.set_status()` (manages `completed_at`). Tickets in "Færdige" are auto-archived (never deleted) after 30 days by `sweep_finished_tickets()`, which runs lazily on each board view — there's no cron/background job.

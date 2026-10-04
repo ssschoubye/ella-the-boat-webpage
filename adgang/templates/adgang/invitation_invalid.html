@@ -1,0 +1,25 @@
+{% extends "card_base.html" %}
+
+{% block title %}Invitationen virker ikke &middot; Ella{% endblock %}
+
+{% block card %}
+{% if reason == "brugt" %}
+    <p class="card-page__error">Invitationen er allerede brugt.</p>
+    <p class="card-page__lead">
+        Hvert link kan kun bruges én gang. Har du selv brugt det, kan du bare
+        <a href="{% url 'account_login' %}">logge ind</a>.
+    </p>
+{% elif reason == "udløbet" %}
+    <p class="card-page__error">Invitationen er udløbet.</p>
+    <p class="card-page__lead">Bed om et nyt link &mdash; det tager et øjeblik at lave.</p>
+{% elif reason == "tilbagekaldt" %}
+    <p class="card-page__error">Invitationen er trukket tilbage.</p>
+    <p class="card-page__lead">Spørg den, der sendte dig linket.</p>
+{% else %}
+    <p class="card-page__error">Vi kan ikke finde den invitation.</p>
+    <p class="card-page__lead">
+        Tjek at hele linket kom med &mdash; de er lange, og en mail- eller
+        beskedapp deler dem nogle gange over to linjer.
+    </p>
+{% endif %}
+{% endblock %}
