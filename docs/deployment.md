@@ -130,8 +130,9 @@ Back up the snapshot, not the live database, by adding this to
 #   sops --encrypt this-file > secrets/ella.sops.yaml
 #
 # Decrypted to /etc/home-server/ella.env and read by the ella stack.
-# Generate the key with:
-#   python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+# Generate the key with (on the desktop, in WSL -- Django is not installed
+# there, so do not use get_random_secret_key()):
+#   openssl rand -base64 48
 
 DJANGO_SECRET_KEY: CHANGE_ME_ELLA_DJANGO_SECRET_KEY
 ```
