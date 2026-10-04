@@ -16,10 +16,11 @@ set the old one's status to `Superseded by ADR-NNNN`.
 | [0007](0007-cloudflare-access-in-front-of-the-site.md) | Cloudflare Access in front of the site | Superseded by 0010 |
 | [0008](0008-records-are-not-linked-to-user-accounts.md) | Records are not linked to user accounts (for now) | Superseded by 0011 |
 | [0009](0009-self-hosted-identity-provider-deferred.md) | Self-hosted identity provider: deferred, and not Keycloak | Deferred |
-| [0010](0010-invitation-links-and-google-sign-in.md) | Invitation links and Google sign-in, instead of Cloudflare Access | Accepted |
+| [0010](0010-invitation-links-and-google-sign-in.md) | Invitation links and Google sign-in, instead of Cloudflare Access | Superseded by 0014 |
 | [0011](0011-records-linked-to-accounts.md) | Records are linked to accounts | Accepted |
 | [0012](0012-public-front-page.md) | A public front page | Accepted |
-| [0013](0013-email-sign-in-codes.md) | Email sign-in codes alongside Google, sent through Resend | Accepted |
+| [0013](0013-email-sign-in-codes.md) | Email sign-in codes alongside Google, sent through Resend | Superseded by 0014 |
+| [0014](0014-invite-links-and-passwords.md) | Invitation links and a password, and nothing else | Accepted |
 
 ## Writing a new one
 

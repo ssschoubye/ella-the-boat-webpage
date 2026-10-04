@@ -1,9 +1,9 @@
 """Invitations.
 
-Access to the site is not a list of allowed email addresses kept somewhere
-and edited whenever the group changes. It is a one-off link: you send someone
-an invitation, they sign in with Google, and their account exists from then on
-(ADR 0010).
+Access to the site is not a list of allowed email addresses kept somewhere and
+edited whenever the group changes. It is a one-off link: you send someone an
+invitation, they pick an email and a password on the page it opens, and their
+account exists from then on (ADR 0014).
 
 So the only thing stored here is the link itself, plus enough to tell whether
 it has already been used.
@@ -20,10 +20,6 @@ from django.utils import timezone
 # the security of the whole scheme: anyone holding a token can create an
 # account, so it has to be unguessable rather than merely unique.
 TOKEN_BYTES = 32
-
-# Where a visited invitation is parked while the visitor is away at Google.
-SESSION_KEY = "adgang_invitation_token"
-
 
 def generate_token():
     return secrets.token_urlsafe(TOKEN_BYTES)

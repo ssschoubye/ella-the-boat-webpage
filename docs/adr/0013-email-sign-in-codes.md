@@ -1,6 +1,6 @@
 # 0013. Email sign-in codes alongside Google, sent through Resend
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0014](0014-invite-links-and-passwords.md)
 - **Date:** 2026-10-04
 - **Extends:** [0010](0010-invitation-links-and-google-sign-in.md)
 

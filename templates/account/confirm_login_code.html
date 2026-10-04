@@ -1,8 +1,0 @@
-{% extends "card_base.html" %}
-
-{% block title %}Indtast kode &middot; Ella{% endblock %}
-
-{% block card %}
-{% url 'account_confirm_login_code' as action_url %}
-{% include "_code_form.html" with action_url=action_url %}
-{% endblock %}

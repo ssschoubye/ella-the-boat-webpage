@@ -7,8 +7,8 @@ Deploying, updating and restoring are in [deployment.md](deployment.md).
 ## Adding a person
 
 Send them an invitation link. That is the whole procedure — there is no list to
-edit, no account to create, no password to invent, and nothing to deploy
-([ADR 0010](adr/0010-invitation-links-and-google-sign-in.md)).
+edit, no account to create for them, and nothing to deploy
+([ADR 0014](adr/0014-invite-links-and-passwords.md)).
 
 **From the admin**, which works from a phone:
 
@@ -28,22 +28,19 @@ docker exec -it -u app ella python manage.py invite "Anton"
 
 `--days 7` for a shorter life.
 
-They open the link and pick one of two ways in:
+They open the link and fill in three things: their first name, any email
+address they like, and a password. The account exists from that moment and
+they are signed in. Nothing is emailed to them, so there is nothing to wait
+for and no spam folder to check.
 
-- **"Fortsæt med Google"** — one tap, nothing to remember. Their name comes
-  from the Google profile.
-- **An email address** — any address at all, not just Gmail. They get a code,
-  type it in, and they are in ([ADR 0013](adr/0013-email-sign-in-codes.md)).
-
-Point people at Google if they have it: the credential is then an account with
-2FA on it rather than an inbox. The email route exists so that not having
-Google is never the reason someone cannot see the calendar.
+The name is what the others see on their bookings and comments. The email is
+what they log in with.
 
 A few things worth knowing:
 
 - **Treat the link like a door code.** Anyone holding it can create an
-  account, by either route. Send it directly to the person, not to a group
-  chat you do not control.
+  account. Send it directly to the person, not to a group chat you do not
+  control.
 - Each link works **once** and expires after 30 days. If someone sits on it too
   long, make another; they are free.
 - Changed your mind before they used it? Open it in the admin and tick
@@ -64,31 +61,42 @@ logs everyone out.
 
 There is no Access policy to edit any more, and nothing to deploy.
 
-## Resetting the admin password
+## Resetting a forgotten password
 
-Nobody in the group has a password, so there is nothing to reset for them. If
-they lose access to their Google account, that is Google's recovery flow; if
-they lose the inbox they signed up with, invite them again and they will get a
-second account — tell them to sign in with the address they already used, or
-deactivate the old one.
+The site sends no email, so there is no self-service reset — this is the one
+recurring manual job the design trades for having no SMTP, no identity
+provider and no secrets to rotate
+([ADR 0014](adr/0014-invite-links-and-passwords.md)).
 
-The one password is the superuser's, for `/admin/`:
+Easiest, from a phone: `/admin/` → *Users* → their account → the **"this
+form"** link under the password field, set a new one, and tell them through
+some channel other than the site.
+
+Or on the server:
 
 ```bash
-docker exec -it -u app ella python manage.py changepassword <username>
+docker exec -it -u app ella python manage.py changepassword <their-email>
 ```
 
-The first admin account is created with `createsuperuser`
-([deployment.md](deployment.md#first-deploy)). Use your own Google address for
-it: signing in with Google then attaches to the same account rather than
-creating a second one.
+The username *is* their email address.
 
-Five wrong attempts locks that IP out of `/admin/` for 30 minutes
-(django-axes). To clear a lockout you imposed on yourself:
+Do not send a fresh invitation link instead: links only create new accounts,
+so that would give them a second account and detach them from their own
+bookings and uploads.
+
+### Lockouts
+
+Five wrong attempts locks that IP, and that (email, IP) pair, out for 30
+minutes. A locked-out person gets a `429` page telling them to wait. To clear
+it immediately:
 
 ```bash
 docker exec -it -u app ella python manage.py axes_reset
 ```
+
+The first admin account is created with `createsuperuser`
+([deployment.md](deployment.md#first-deploy)). Give it the email address you
+want to log into `/admin/` with.
 
 ## Logs and health
 
@@ -104,11 +112,6 @@ and when:
 ```bash
 make logs SERVICE=ella | grep -E "Successful login|Invitation .* accepted"
 ```
-
-If someone says a sign-in code never arrived, check for an SMTP error in the
-same logs, then Resend's dashboard
-([security.md](security.md#checking-resend-works)). Google sign-in is
-unaffected by that failure, so most of the group will see nothing wrong.
 
 Logs also go to VictoriaLogs through the home server's Vector pipeline. The
 blackbox probe on `https://ella.molder.app/healthz/` raises the `SiteDown`

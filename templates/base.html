@@ -34,12 +34,12 @@
                         <a href="{% url 'vedligehold' %}">Vedligehold</a>
                         <a href="{% url 'skader' %}">Skader</a>
                     </nav>
-                    <form method="post" action="{% url 'account_logout' %}" class="logout-form">
+                    <form method="post" action="{% url 'logout' %}" class="logout-form">
                         {% csrf_token %}
                         <button type="submit" class="logout-button">Log ud</button>
                     </form>
                 {% else %}
-                    <a class="logout-button logout-button--link" href="{% url 'account_login' %}">Log ind</a>
+                    <a class="logout-button logout-button--link" href="{% url 'login' %}">Log ind</a>
                 {% endif %}
             </div>
         </div>

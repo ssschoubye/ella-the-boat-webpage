@@ -1,0 +1,26 @@
+{% extends "card_base.html" %}
+
+{% block title %}Log ind &middot; Ella{% endblock %}
+
+{% block card %}
+{% if form.errors %}
+    <p class="card-page__error">{{ form.non_field_errors|join:" "|default:"Forkert e-mailadresse eller adgangskode." }}</p>
+{% endif %}
+
+<form method="post" class="login-form">
+    {% csrf_token %}
+    <label for="id_username">E-mailadresse</label>
+    <input type="email" name="username" id="id_username" autocomplete="email"
+           inputmode="email" autofocus required value="{{ form.username.value|default:'' }}">
+    <label for="id_password">Adgangskode</label>
+    <input type="password" name="password" id="id_password" autocomplete="current-password" required>
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+    <button type="submit">Log ind</button>
+</form>
+
+<p class="card-page__note">
+    Har du ikke adgang endnu? Du skal have et invitationslink fra en i
+    bådlauget. Har du glemt din adgangskode, så sig det til den, der passer
+    siden &mdash; den kan nulstilles derfra.
+</p>
+{% endblock %}

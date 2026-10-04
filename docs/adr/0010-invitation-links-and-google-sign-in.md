@@ -1,6 +1,6 @@
 # 0010. Invitation links and Google sign-in, instead of Cloudflare Access
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0014](0014-invite-links-and-passwords.md)
 - **Date:** 2026-10-04
 - **Supersedes:** [0007](0007-cloudflare-access-in-front-of-the-site.md)
 

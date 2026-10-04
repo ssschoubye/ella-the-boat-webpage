@@ -7,7 +7,7 @@
     <p class="card-page__error">Invitationen er allerede brugt.</p>
     <p class="card-page__lead">
         Hvert link kan kun bruges én gang. Har du selv brugt det, kan du bare
-        <a href="{% url 'account_login' %}">logge ind</a>.
+        <a href="{% url 'login' %}">logge ind</a>.
     </p>
 {% elif reason == "udløbet" %}
     <p class="card-page__error">Invitationen er udløbet.</p>

@@ -55,18 +55,6 @@ STORAGES = {
 # would break the container's plain-HTTP healthcheck, so it is off by default.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-# allauth builds the Google callback URL with request.build_absolute_uri, so
-# the header above is what actually makes it https. This is belt and braces
-# for the paths that consult the setting instead, and it has to be https or
-# Google rejects the redirect_uri as not matching the registered one.
-ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
-
-# Real SMTP in production, where base.py defaults to the console backend so
-# local development needs none. Sign-in codes are the only mail the site
-# sends, so if this is wrong, the symptom is that the email route silently
-# stops working while Google still does -- check the container logs.
-EMAIL_BACKEND = env("DJANGO_EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
-
 SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=False)
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True

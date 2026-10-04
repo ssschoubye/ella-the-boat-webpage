@@ -30,7 +30,7 @@ class LoginWallTests(TestCase):
 
     def test_the_public_front_page_offers_a_way_in(self):
         response = self.client.get("/")
-        self.assertContains(response, "/accounts/login/")
+        self.assertContains(response, "/login/")
 
     def test_the_public_front_page_leaks_no_private_pages(self):
         response = self.client.get("/")
@@ -43,7 +43,7 @@ class LoginWallTests(TestCase):
             with self.subTest(path=path):
                 response = self.client.get(path)
                 self.assertEqual(response.status_code, 302)
-                self.assertIn("/accounts/login/", response["Location"])
+                self.assertIn("/login/", response["Location"])
 
     def test_signing_in_replaces_the_landing_page_with_the_real_start_page(self):
         self.client.force_login(User.objects.create_user("anton"))
@@ -53,17 +53,19 @@ class LoginWallTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "core/home.html")
 
-    def test_the_old_password_login_url_is_gone(self):
-        """Signed in, so the login wall is not what answers here (ADR 0010)."""
-        self.client.force_login(User.objects.create_user("anton"))
-        self.assertEqual(self.client.get("/login/").status_code, 404)
-
-    def test_the_login_page_asks_for_no_password(self):
-        response = self.client.get("/accounts/login/")
+    def test_the_login_page_asks_for_an_email_and_a_password(self):
+        response = self.client.get("/login/")
 
         self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, 'type="password"')
-        self.assertContains(response, "Google")
+        self.assertContains(response, 'name="username"')
+        self.assertContains(response, 'type="password"')
+
+    def test_the_login_page_does_not_offer_self_service_signup(self):
+        """An invitation link is the only way in (ADR 0014)."""
+        response = self.client.get("/login/")
+
+        self.assertNotContains(response, "/signup/")
+        self.assertNotContains(response, "/invitation/")
 
 
 class PersonFilterTests(TestCase):

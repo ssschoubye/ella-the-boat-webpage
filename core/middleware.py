@@ -1,20 +1,19 @@
 from django.contrib.auth.views import redirect_to_login
 
-# Prefixes that anyone may reach. `/accounts/` is allauth: the login page
-# itself and the Google callback. `/invitation/` is how a new person gets in
-# before they have an account at all.
-EXEMPT_PREFIXES = ("/admin/", "/static/", "/healthz/", "/accounts/", "/invitation/")
+# Prefixes that anyone may reach. `/invitation/` is how a new person creates
+# their account, before they have one.
+EXEMPT_PREFIXES = ("/admin/", "/static/", "/healthz/", "/invitation/")
 
 # Exact paths that anyone may reach. The front page is public (ADR 0012); it
 # shows the boat and a way in, and `core.views.home` serves the real start
-# page instead once you are signed in. Matched exactly, because "/" as a
-# prefix would of course exempt the entire site.
-EXEMPT_PATHS = ("/",)
+# page instead once you are signed in. The login page is here too. Matched
+# exactly, because "/" as a prefix would of course exempt the entire site.
+EXEMPT_PATHS = ("/", "/login/", "/logout/")
 
 
 class LoginRequiredMiddleware:
     """Require an authenticated session for every page except the public front
-    page, the sign-on flow, /admin/ (which has its own login), static files
+    page, the sign-on pages, /admin/ (which has its own login), static files
     and the health check."""
 
     def __init__(self, get_response):

@@ -32,17 +32,8 @@ Environment variables (defaults are right for `ella.molder.app`):
 | Variable | Default | Notes |
 |---|---|---|
 | `DJANGO_SECRET_KEY` | — | **Required.** Comes from sops |
-| `GOOGLE_OAUTH_CLIENT_ID` | — | **Required**, or nobody can sign in. From sops; see [security.md](security.md#google-oauth-client) |
-| `GOOGLE_OAUTH_CLIENT_SECRET` | — | **Required.** Same place |
 | `DJANGO_PUBLIC_BASE_URL` | `https://ella.molder.app` | What invitation links are built from. A management command has no request to derive a host from |
 | `DJANGO_INVITATION_VALID_DAYS` | `30` | How long a new invitation link stays usable |
-| `DJANGO_EMAIL_HOST` | — | **Required for the email sign-in route.** `smtp.resend.com`; from sops |
-| `DJANGO_EMAIL_HOST_USER` | — | The literal string `resend` |
-| `DJANGO_EMAIL_HOST_PASSWORD` | — | The Resend API key; from sops |
-| `DJANGO_EMAIL_PORT` | `587` | STARTTLS |
-| `DJANGO_EMAIL_USE_TLS` | `True` | |
-| `DJANGO_DEFAULT_FROM_EMAIL` | `Ella <noreply@molder.app>` | Must be on the domain verified with Resend |
-| `DJANGO_EMAIL_BACKEND` | SMTP in prod, console in dev | Set it to the console backend to disable sending without breaking Google sign-in |
 | `DJANGO_ALLOWED_HOSTS` | `ella.molder.app,localhost,127.0.0.1` | localhost is needed for the healthcheck |
 | `DJANGO_CSRF_TRUSTED_ORIGINS` | `https://ella.molder.app` | |
 | `DJANGO_DATA_DIR` | `/data` | |
@@ -67,7 +58,7 @@ services:
     networks:
       - edge
     env_file:
-      - ${CONFIG_ROOT:?set in .env}/ella.env      # Django key + Google OAuth, from secrets/ella.sops.yaml
+      - ${CONFIG_ROOT:?set in .env}/ella.env      # DJANGO_SECRET_KEY, from secrets/ella.sops.yaml
     volumes:
       - ${STATE_ROOT:?set in .env}/ella:/data     # SQLite DB, uploads, backup snapshot
     read_only: true
@@ -143,17 +134,11 @@ Back up the snapshot, not the live database, by adding this to
 #   python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
 
 DJANGO_SECRET_KEY: CHANGE_ME_ELLA_DJANGO_SECRET_KEY
-GOOGLE_OAUTH_CLIENT_ID: CHANGE_ME_GOOGLE_OAUTH_CLIENT_ID
-GOOGLE_OAUTH_CLIENT_SECRET: CHANGE_ME_GOOGLE_OAUTH_CLIENT_SECRET
-DJANGO_EMAIL_HOST: smtp.resend.com
-DJANGO_EMAIL_HOST_USER: resend
-DJANGO_EMAIL_HOST_PASSWORD: CHANGE_ME_RESEND_API_KEY
-DJANGO_DEFAULT_FROM_EMAIL: Ella <noreply@molder.app>
 ```
 
-Rotating the Django key logs everyone out and nothing else. The Google
-credentials come from [security.md](security.md#google-oauth-client); without
-them the site runs but nobody can sign in.
+That is the only secret the site needs — there is no identity provider and no
+SMTP ([ADR 0014](adr/0014-invite-links-and-passwords.md)). Rotating it logs
+everyone out and nothing else.
 
 ### 4. Backup pre-hook
 
@@ -218,21 +203,18 @@ policy to arrange, because there is no Access ([ADR 0010](adr/0010-invitation-li
    `SITE_IMAGE_TAG=sha-…` from the run summary.
 2. In home-server, set `ella_site_image_tag`, make the changes above, commit,
    `make deploy SERVICE=ella`.
-3. Create the break-glass admin. Use **your own Google address**: signing in
-   with Google later attaches to this same account instead of making a
-   second one.
+3. Create the admin account, which is how you mint invitations and reset
+   passwords:
    ```bash
    docker exec -it -u app ella python manage.py createsuperuser
    ```
-4. Invite yourself, and check the whole flow end to end before sending
-   anyone else a link:
+   Give it the email address you want to log into `/admin/` with.
+4. Invite yourself and walk the whole flow before sending anyone else a link:
    ```bash
    docker exec -it -u app ella python manage.py invite "Dig selv"
    ```
-   Open the printed link in a private window and press "Fortsæt med
-   Google". If Google shows `redirect_uri_mismatch`, the redirect URI on
-   the OAuth client is wrong — see
-   [security.md](security.md#google-oauth-client).
+   Open the printed link in a private window, fill in the form, and confirm
+   you land on the start page signed in.
 5. Invite the rest of the group from `/admin/`
    ([operations.md](operations.md#adding-a-person)).
 6. `curl -I https://ella.molder.app/healthz/` should return `200`, and
@@ -287,12 +269,12 @@ curl -i localhost:8080/healthz/
 
 ## Access control
 
-Sign-on is Google **or** an emailed one-time code, either way with sign-up
-gated on a single-use invitation link, and no Cloudflare Access
-([ADR 0010](adr/0010-invitation-links-and-google-sign-in.md),
-[ADR 0013](adr/0013-email-sign-in-codes.md)). The one-time setup for both --
-the Google OAuth client and the Resend domain -- is in
-[security.md](security.md); inviting and removing people is in
+An invitation link where the person picks any email address and a password,
+and that is the only way an account is created
+([ADR 0014](adr/0014-invite-links-and-passwords.md)). No Cloudflare Access, no
+identity provider, no outbound email, and nothing to set up beyond
+`DJANGO_SECRET_KEY`. How it works is in [security.md](security.md); inviting
+and removing people is in
 [operations.md](operations.md#adding-a-person).
 
 If an old Cloudflare Access application still covers `ella.molder.app`,

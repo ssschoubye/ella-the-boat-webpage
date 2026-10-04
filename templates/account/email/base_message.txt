@@ -1,8 +1,0 @@
-{% autoescape off %}Hej fra {{ current_site.name }}!
-
-{% block content %}{% endblock content %}
-
---
-{{ current_site.name }}
-https://{{ current_site.domain }}
-{% endautoescape %}

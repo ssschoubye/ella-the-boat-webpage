@@ -16,8 +16,7 @@ Cloudflare edge ─── TLS, "Always Use HTTPS", HSTS (ADR 0005)
   ▼
 cloudflared ──http──▶ Caddy ──http──▶ ella container :80
                      (shared,        gunicorn, 2 workers
-                      all sites)     Google or emailed code, invite-only
-                                       (ADR 0010, 0013)
+                      all sites)     Invite link + password (ADR 0014)
                                      Login wall, public "/" (ADR 0006, 0012)
                                        │
                                        ▼
@@ -35,7 +34,7 @@ repo. This repo owns only the image.
 | App | URL | What it does |
 |---|---|---|
 | `core` | `/`, `/healthz/` | Public front page and signed-in start page, placeholder pages, the login-wall middleware, the health check, `snapshot_db` |
-| `adgang` | `/invitation/<token>/` | Single-use invitation links and the allauth adapters that make sign-up invite-only ([ADR 0010](adr/0010-invitation-links-and-google-sign-in.md)) |
+| `adgang` | `/invitation/<token>/` | Single-use invitation links. The signup form lives on the link itself, which is the only way an account is created ([ADR 0014](adr/0014-invite-links-and-passwords.md)) |
 | `booking` | `/kalender/` | Month/week/list calendar of trips; repeating trips are stored as separate rows sharing a `series_id` |
 | `filarkiv` | `/filarkiv/` | Upload, search and download files (max 25 MB); only downloadable through a logged-in view |
 | `vedligehold` | `/vedligehold/` | Maintenance tickets on a board with comments; finished tickets archive themselves after 30 days |
@@ -59,7 +58,10 @@ values. See [deployment.md](deployment.md#what-the-image-does).
 ## Build and release
 
 ```
-push to main ──▶ GitHub Actions: tests ──▶ home-server's build-site-image.yml
+push to main ──▶ GitHub Actions: tests ──▶ build + push (inlined in build.yml;
+                                             this repo is public and
+                                             home-server is private, so its
+                                             reusable workflow is unusable)
                                              └─▶ ghcr.io/ssschoubye/ella:sha-<short>
 home-server: pin tag in group_vars ──▶ commit ──▶ make deploy SERVICE=ella
 container start: chown /data ──▶ drop to uid 10001 ──▶ migrate ──▶ gunicorn

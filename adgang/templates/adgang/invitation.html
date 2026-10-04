@@ -1,21 +1,51 @@
 {% extends "card_base.html" %}
 
-{% block title %}Invitation &middot; Ella{% endblock %}
+{% block title %}Opret din konto &middot; Ella{% endblock %}
+
+{% comment %}
+The signup form lives on the invitation link itself, so there is no separate
+signup URL that could be left open (ADR 0014). The view re-checks the token on
+POST, so a link revoked while this page sat open does not work.
+{% endcomment %}
 
 {% block card %}
 <p class="card-page__lead">
     Du er inviteret til Ella &mdash; bådlaugets side med kalender, filarkiv og
-    vedligehold.
+    vedligehold. Vælg en e-mailadresse og en adgangskode, så er du inde.
 </p>
 
-{# account_signup rather than the login code URL: this visitor has no account
-   yet, and asking for a login code would only mail them "no such account". #}
-{% url 'account_signup' as code_action_url %}
-{% include "_signin_options.html" with code_action_url=code_action_url code_action_label="Opret konto med e-mail" %}
+<form method="post" class="login-form">
+    {% csrf_token %}
+
+    <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+    <input type="text" name="first_name" id="{{ form.first_name.id_for_label }}"
+           autocomplete="given-name" autofocus required
+           value="{{ form.first_name.value|default:'' }}">
+    {% if form.first_name.errors %}<p class="form-field__errors">{{ form.first_name.errors|join:", " }}</p>{% endif %}
+    <p class="form-field__hint">{{ form.first_name.help_text }}</p>
+
+    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+    <input type="email" name="email" id="{{ form.email.id_for_label }}"
+           autocomplete="email" inputmode="email" required
+           value="{{ form.email.value|default:'' }}">
+    {% if form.email.errors %}<p class="form-field__errors">{{ form.email.errors|join:", " }}</p>{% endif %}
+    <p class="form-field__hint">{{ form.email.help_text }}</p>
+
+    <label for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
+    <input type="password" name="password1" id="{{ form.password1.id_for_label }}"
+           autocomplete="new-password" required>
+    {% if form.password1.errors %}<p class="form-field__errors">{{ form.password1.errors|join:" " }}</p>{% endif %}
+
+    <label for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
+    <input type="password" name="password2" id="{{ form.password2.id_for_label }}"
+           autocomplete="new-password" required>
+    {% if form.password2.errors %}<p class="form-field__errors">{{ form.password2.errors|join:", " }}</p>{% endif %}
+
+    <button type="submit">Opret konto</button>
+</form>
 
 <p class="card-page__note">
-    Vælg selv. Med Google skal du ikke huske noget; med e-mail sender vi dig
-    en engangskode, og det virker med enhver adresse. Du skal ikke finde på en
-    adgangskode &mdash; siden har ingen. Linket virker én gang.
+    Linket virker én gang. Din adresse bliver kun brugt til at logge ind med
+    &mdash; siden sender ikke mails.
 </p>
 {% endblock %}
