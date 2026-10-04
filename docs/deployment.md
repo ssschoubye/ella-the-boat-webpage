@@ -193,14 +193,24 @@ policy to arrange, because there is no Access ([ADR 0010](adr/0010-invitation-li
 
 ## One-time GitHub setup
 
-1. **Reusable workflow access.** home-server is private, so ella's workflow
-   can only call `build-site-image.yml` if you allow it: home-server →
-   Settings → Actions → General → *Access* → "Accessible from repositories
-   owned by the user 'ssschoubye'".
-2. **Package visibility.** After the first build, the `ella` package on GHCR
-   is private. Either make it public (Package settings → Change visibility) or
-   give Docker on the server a pull credential. The image contains only code
-   and no data or secrets, so public is fine.
+1. **Nothing, for the build.** `build.yml` used to call home-server's
+   reusable `build-site-image.yml`, and that could never work: **this repo is
+   public and home-server is private, and a public repository cannot call a
+   reusable workflow from a private one.** home-server's *Settings → Actions →
+   General → Access → "Accessible from repositories owned by the user"* is
+   already on, but it only extends access to *private* repos, so it does not
+   help. Every run failed in 0s with no jobs, which is what resolving `uses:`
+   failing looks like — there is no job log, only a banner in the Actions web
+   UI.
+
+   The build job is now a copy of home-server's, inlined in `build.yml`. **If
+   you change one, change the other.**
+2. **Package visibility.** The `ella` package on GHCR inherits this repo's
+   visibility, so with the repo public the package is public too and the
+   server pulls with no credential. The image contains only code — no data and
+   no secrets — so that is fine. If this repo is ever made private, either
+   flip the package back to public (Package settings → Change visibility) or
+   give Docker on the server a pull credential.
 
 ## First deploy
 
