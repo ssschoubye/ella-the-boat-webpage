@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -269,6 +270,98 @@ class LockoutTests(TestCase):
         self.attempt(GOOD_PASSWORD)
 
         self.assertEqual(int(self.client.session["_auth_user_id"]), self.user.pk)
+
+
+class RenameLoginCommandTests(TestCase):
+    """The username is the login identifier, so renaming it must be safe."""
+
+    def setUp(self):
+        self.user = User.objects.create_superuser(
+            "soren", email="soren@firma.dk", password=GOOD_PASSWORD
+        )
+
+    def test_it_moves_the_login_to_the_email_address(self):
+        call_command("rename_login", "soren", "Soren@Firma.DK", stdout=StringIO())
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.username, "soren@firma.dk")
+        self.assertEqual(self.user.email, "soren@firma.dk")
+
+    def test_the_renamed_account_can_then_use_the_site_login(self):
+        """The point of the command: /login/ is an email field, so a superuser
+        called `soren` could only ever get in via /admin/."""
+        before = self.client.post(
+            reverse("login"), {"username": "soren", "password": GOOD_PASSWORD}
+        )
+        self.assertEqual(before.status_code, 200)  # form redisplayed: not an email
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+        call_command("rename_login", "soren", "soren@firma.dk", stdout=StringIO())
+
+        response = self.client.post(
+            reverse("login"), {"username": "soren@firma.dk", "password": GOOD_PASSWORD}
+        )
+
+        self.assertRedirects(response, reverse("home"))
+        self.assertEqual(int(self.client.session["_auth_user_id"]), self.user.pk)
+
+    def test_it_keeps_their_history(self):
+        from booking.models import Booking
+
+        Booking.objects.create(
+            title="Tur", booker=self.user,
+            start_date="2026-07-04T09:00Z", end_date="2026-07-05T17:00Z",
+        )
+
+        call_command("rename_login", "soren", "soren@firma.dk", stdout=StringIO())
+
+        self.assertEqual(Booking.objects.get().booker_id, self.user.pk)
+
+    def test_an_unknown_account_is_an_error(self):
+        with self.assertRaises(CommandError):
+            call_command("rename_login", "nobody", "x@firma.dk", stdout=StringIO())
+
+    def test_an_invalid_address_is_an_error(self):
+        with self.assertRaises(CommandError):
+            call_command("rename_login", "soren", "not-an-address", stdout=StringIO())
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.username, "soren")
+
+    def test_a_clash_is_an_error_rather_than_a_merge(self):
+        User.objects.create_user("anton@firma.dk", email="anton@firma.dk", password="x")
+
+        with self.assertRaises(CommandError):
+            call_command("rename_login", "soren", "anton@firma.dk", stdout=StringIO())
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.username, "soren")
+
+
+class ListPeopleCommandTests(TestCase):
+    def test_it_warns_about_a_username_that_cannot_use_the_login(self):
+        User.objects.create_superuser("soren", email="soren@firma.dk", password="x")
+
+        out = StringIO()
+        call_command("list_people", stdout=out)
+
+        printed = out.getvalue()
+        self.assertIn("soren", printed)
+        self.assertIn("rename_login", printed)
+
+    def test_it_is_quiet_about_a_normal_account(self):
+        User.objects.create_user("anton@firma.dk", email="anton@firma.dk", password="x")
+
+        out = StringIO()
+        call_command("list_people", stdout=out)
+
+        printed = out.getvalue()
+        self.assertIn("anton@firma.dk", printed)
+        self.assertNotIn("rename_login", printed)
+
+    def test_it_copes_with_no_accounts(self):
+        out = StringIO()
+        call_command("list_people", stdout=out)
+        self.assertIn("No accounts yet", out.getvalue())
 
 
 class InviteCommandTests(TestCase):

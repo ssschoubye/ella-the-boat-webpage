@@ -48,6 +48,11 @@ Production is a Docker container on the user's home server, managed by the separ
 - **Settings:** `config/settings/base.py` is shared; `dev.py` / `prod.py` override DB, DEBUG, hosts, static storage and HTTPS hardening.
 - **Login wall:** `core.middleware.LoginRequiredMiddleware` forces authentication on every path except the `EXEMPT_PREFIXES` (`/admin/`, `/static/`, `/healthz/`, `/accounts/`, `/invitation/`) and the `EXEMPT_PATHS` exact matches (`/`). The two lists are separate because `"/"` as a prefix would exempt the whole site. Views therefore don't use `@login_required` — new views are protected automatically.
 - **Sign-on (`adgang`):** `Invitation` is a single-use, expiring, revocable link. **The signup form is on the invitation page itself** (`adgang/views.py`), so there is no separate signup URL that could be left open -- holding the token *is* the authorisation. The view re-checks the token on POST as well as GET, so a link revoked while the form sat open does not work; there is a test for that. Mint links in `/admin/` or with `manage.py invite "<name>"`.
+- **Ops commands:** `manage.py invite "<name>"` mints a link, `list_people`
+  shows every account and warns about any whose username is not an email (it
+  can then only sign in at `/admin/`), `rename_login <old> <email>` moves an
+  account's login. Prefer adding a command to pasting a `shell -c` one-liner
+  into a doc.
 - **The email address is the username**, lower-cased in both `SignupForm.clean_email` and `EmailLoginForm.clean_username` so `Anton@` and `anton@` cannot become two accounts. It is **never verified** -- the invitation link is the proof, and that is what removes any need for SMTP. The site sends no email at all.
 - **`login()` must be passed `backend=`** when signing someone in after signup: `AxesStandaloneBackend` is also installed and Django refuses to guess between two backends.
 - **django-axes answers 429**, not 403, and the lockout deliberately survives a subsequently-correct password -- otherwise the limit only delays a guesser until they land it.
