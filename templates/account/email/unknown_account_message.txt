@@ -1,0 +1,13 @@
+{% extends "account/email/base_message.txt" %}
+
+{% comment %}
+Deliberately does NOT link to the signup page: signing up needs an invitation
+link, so that link would only lead to "du har ikke adgang". Pointing at a
+person is the useful answer.
+{% endcomment %}
+
+{% block content %}{% autoescape off %}Nogen har bedt om en kode til Ella for denne adresse, men der findes ingen konto med den.
+
+Hører du til i bådlauget, skal du have et invitationslink fra en af de andre -- så kan du oprette kontoen på et par sekunder.
+
+Var det ikke dig, kan du roligt ignorere denne mail.{% endautoescape %}{% endblock content %}

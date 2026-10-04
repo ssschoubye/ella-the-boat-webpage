@@ -1,0 +1,9 @@
+{% extends "account/email/base_message.txt" %}
+
+{% block content %}{% autoescape off %}Din engangskode til at logge ind er:
+
+{{ code }}
+
+Skriv den i det vindue, du har åbent. Koden holder i 10 minutter og kan kun bruges én gang.
+
+Har du ikke selv bedt om at logge ind, kan du roligt ignorere denne mail -- men sig det til den, der passer siden.{% endautoescape %}{% endblock content %}

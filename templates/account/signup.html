@@ -1,0 +1,35 @@
+{% extends "card_base.html" %}
+
+{% block title %}Opret konto &middot; Ella{% endblock %}
+
+{% comment %}
+Only reachable while the session holds a usable invitation --
+InvitationOnlyAccountAdapter.is_open_for_signup refuses otherwise and allauth
+renders signup_closed.html instead. There is no password field, by way of
+ACCOUNT_SIGNUP_FIELDS.
+{% endcomment %}
+
+{% block card %}
+<p class="card-page__lead">
+    Opret din konto med en e-mailadresse. Vi sender en kode til den, og så er
+    du inde &mdash; ingen adgangskode.
+</p>
+
+{% if form.errors %}
+    <p class="card-page__error">{{ form.email.errors|join:", "|default:"Tjek adressen og prøv igen." }}</p>
+{% endif %}
+
+<form method="post" action="{% url 'account_signup' %}" class="login-form">
+    {% csrf_token %}
+    <label for="id_email">E-mailadresse</label>
+    <input type="email" name="email" id="id_email" autocomplete="email"
+           inputmode="email" required autofocus
+           value="{{ form.email.value|default:'' }}">
+    {{ redirect_field }}
+    <button type="submit">Opret konto</button>
+</form>
+
+<p class="card-page__note">
+    Vil du bruge Google i stedet? <a href="{% url 'account_login' %}">Gå tilbage</a>.
+</p>
+{% endblock %}

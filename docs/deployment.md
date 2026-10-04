@@ -36,6 +36,13 @@ Environment variables (defaults are right for `ella.molder.app`):
 | `GOOGLE_OAUTH_CLIENT_SECRET` | — | **Required.** Same place |
 | `DJANGO_PUBLIC_BASE_URL` | `https://ella.molder.app` | What invitation links are built from. A management command has no request to derive a host from |
 | `DJANGO_INVITATION_VALID_DAYS` | `30` | How long a new invitation link stays usable |
+| `DJANGO_EMAIL_HOST` | — | **Required for the email sign-in route.** `smtp.resend.com`; from sops |
+| `DJANGO_EMAIL_HOST_USER` | — | The literal string `resend` |
+| `DJANGO_EMAIL_HOST_PASSWORD` | — | The Resend API key; from sops |
+| `DJANGO_EMAIL_PORT` | `587` | STARTTLS |
+| `DJANGO_EMAIL_USE_TLS` | `True` | |
+| `DJANGO_DEFAULT_FROM_EMAIL` | `Ella <noreply@molder.app>` | Must be on the domain verified with Resend |
+| `DJANGO_EMAIL_BACKEND` | SMTP in prod, console in dev | Set it to the console backend to disable sending without breaking Google sign-in |
 | `DJANGO_ALLOWED_HOSTS` | `ella.molder.app,localhost,127.0.0.1` | localhost is needed for the healthcheck |
 | `DJANGO_CSRF_TRUSTED_ORIGINS` | `https://ella.molder.app` | |
 | `DJANGO_DATA_DIR` | `/data` | |
@@ -138,6 +145,10 @@ Back up the snapshot, not the live database, by adding this to
 DJANGO_SECRET_KEY: CHANGE_ME_ELLA_DJANGO_SECRET_KEY
 GOOGLE_OAUTH_CLIENT_ID: CHANGE_ME_GOOGLE_OAUTH_CLIENT_ID
 GOOGLE_OAUTH_CLIENT_SECRET: CHANGE_ME_GOOGLE_OAUTH_CLIENT_SECRET
+DJANGO_EMAIL_HOST: smtp.resend.com
+DJANGO_EMAIL_HOST_USER: resend
+DJANGO_EMAIL_HOST_PASSWORD: CHANGE_ME_RESEND_API_KEY
+DJANGO_DEFAULT_FROM_EMAIL: Ella <noreply@molder.app>
 ```
 
 Rotating the Django key logs everyone out and nothing else. The Google
@@ -266,11 +277,13 @@ curl -i localhost:8080/healthz/
 
 ## Access control
 
-Sign-on is Google, with sign-up gated on a single-use invitation link, and no
-Cloudflare Access ([ADR 0010](adr/0010-invitation-links-and-google-sign-in.md)).
-The one-time Google OAuth client setup is in
-[security.md](security.md#google-oauth-client); inviting and removing people is
-in [operations.md](operations.md#adding-a-person).
+Sign-on is Google **or** an emailed one-time code, either way with sign-up
+gated on a single-use invitation link, and no Cloudflare Access
+([ADR 0010](adr/0010-invitation-links-and-google-sign-in.md),
+[ADR 0013](adr/0013-email-sign-in-codes.md)). The one-time setup for both --
+the Google OAuth client and the Resend domain -- is in
+[security.md](security.md); inviting and removing people is in
+[operations.md](operations.md#adding-a-person).
 
 If an old Cloudflare Access application still covers `ella.molder.app`,
 **delete it**. While it exists every request is intercepted and the site

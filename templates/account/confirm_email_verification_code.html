@@ -1,0 +1,8 @@
+{% extends "card_base.html" %}
+
+{% block title %}Bekræft din e-mail &middot; Ella{% endblock %}
+
+{% block card %}
+{% url 'account_email_verification_sent' as action_url %}
+{% include "_code_form.html" with action_url=action_url %}
+{% endblock %}

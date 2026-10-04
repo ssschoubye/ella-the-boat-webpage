@@ -1,0 +1,38 @@
+{# Shared body for the two "type the code you were emailed" pages. allauth
+   calls the field form `verify_form`, and offers a resend as a second POST to
+   the same URL with action=resend. #}
+<p class="card-page__lead">
+    Vi har sendt en kode til <strong>{{ email }}</strong>. Den udløber om
+    nogle minutter, så brug den med det samme.
+</p>
+
+{% if verify_form.errors %}
+    <p class="card-page__error">
+        {{ verify_form.code.errors|join:", "|default:"Koden passer ikke. Prøv igen." }}
+    </p>
+{% endif %}
+
+<form method="post" action="{{ action_url }}" class="login-form">
+    {% csrf_token %}
+    <label for="id_code">Kode</label>
+    {# Not numeric: allauth's codes look like TSPC-CKMW. #}
+    <input type="text" name="code" id="id_code" required autofocus
+           autocomplete="one-time-code" autocapitalize="characters"
+           spellcheck="false" autocorrect="off">
+    {{ redirect_field }}
+    <button type="submit">Bekræft</button>
+</form>
+
+{% if can_resend %}
+    <form method="post" action="{{ action_url }}" class="code-resend">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="resend">
+        {{ redirect_field }}
+        <button type="submit" class="link-button">Send en ny kode</button>
+    </form>
+{% endif %}
+
+<p class="card-page__note">
+    Kan du ikke finde mailen? Se i spam &mdash; den kommer fra
+    <em>noreply@molder.app</em>.
+</p>

@@ -1,16 +1,27 @@
+import re
 from datetime import timedelta
 from io import StringIO
 
 from allauth.account.models import EmailAddress
 from allauth.socialaccount.models import SocialAccount, SocialLogin
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sessions.backends.db import SessionStore
+from django.core import mail
+from django.core.cache import cache
 from django.core.management import call_command
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, TestCase, override_settings
+from django.urls import reverse
 from django.utils import timezone
 
-from .adapters import InvitationOnlySocialAccountAdapter, pending_invitation, remember_invitation
+from .adapters import (
+    InvitationOnlyAccountAdapter,
+    InvitationOnlySocialAccountAdapter,
+    pending_invitation,
+    remember_invitation,
+)
 from .models import SESSION_KEY, Invitation
+from .signals import spend_invitation
 
 User = get_user_model()
 
@@ -22,6 +33,18 @@ def google_login(email="anton@example.com", first_name="Anton", verified=True, u
         account=SocialAccount(provider="google", uid=uid, extra_data={"email": email}),
         email_addresses=[EmailAddress(email=email, verified=verified, primary=True)],
     )
+
+
+def extract_code(body):
+    """Pull the code out of a sent mail.
+
+    allauth's default generator produces an uppercase alphanumeric code with a
+    dash in it (e.g. TSPC-CKMW), on a line of its own -- not six digits, which
+    is what one assumes and then writes a regex for.
+    """
+    match = re.search(r"^([A-Z0-9][A-Z0-9-]{5,})$", body, re.MULTILINE)
+    assert match, "no code found in mail body: " + body
+    return match.group(1)
 
 
 def request_with_session():
@@ -112,17 +135,22 @@ class PendingInvitationTests(TestCase):
 
 
 class SignupGateTests(TestCase):
+    """Both adapters have to refuse, or the gate has a hole in it."""
+
     def setUp(self):
-        self.adapter = InvitationOnlySocialAccountAdapter()
+        self.social = InvitationOnlySocialAccountAdapter()
+        self.local = InvitationOnlyAccountAdapter()
 
-    def test_signup_is_closed_without_an_invitation(self):
+    def test_signup_is_closed_on_both_paths_without_an_invitation(self):
         request = request_with_session()
-        self.assertFalse(self.adapter.is_open_for_signup(request, google_login()))
+        self.assertFalse(self.social.is_open_for_signup(request, google_login()))
+        self.assertFalse(self.local.is_open_for_signup(request))
 
-    def test_signup_is_open_while_holding_a_usable_invitation(self):
+    def test_signup_is_open_on_both_paths_while_holding_an_invitation(self):
         request = request_with_session()
         remember_invitation(request, Invitation.objects.create(label="Anton"))
-        self.assertTrue(self.adapter.is_open_for_signup(request, google_login()))
+        self.assertTrue(self.social.is_open_for_signup(request, google_login()))
+        self.assertTrue(self.local.is_open_for_signup(request))
 
     def test_signup_is_closed_once_the_invitation_is_spent(self):
         invitation = Invitation.objects.create(label="Anton")
@@ -130,14 +158,31 @@ class SignupGateTests(TestCase):
         remember_invitation(request, invitation)
         invitation.accept(User.objects.create_user("earlier"))
 
-        self.assertFalse(self.adapter.is_open_for_signup(request, google_login()))
+        self.assertFalse(self.social.is_open_for_signup(request, google_login()))
+        self.assertFalse(self.local.is_open_for_signup(request))
 
-    def test_saving_a_user_spends_the_invitation_and_clears_the_session(self):
+    def test_the_account_keeps_the_name_and_email_from_google(self):
+        request = request_with_session()
+        remember_invitation(request, Invitation.objects.create(label="Anton"))
+
+        user = self.social.save_user(
+            request, google_login(email="a@example.com", first_name="Anton")
+        )
+
+        self.assertEqual(user.first_name, "Anton")
+        self.assertEqual(user.email, "a@example.com")
+
+
+class SpendInvitationSignalTests(TestCase):
+    """The signal is what marks a link used, on either signup path."""
+
+    def test_it_spends_the_invitation_and_clears_the_session(self):
         invitation = Invitation.objects.create(label="Anton")
         request = request_with_session()
         remember_invitation(request, invitation)
+        user = User.objects.create_user("anton")
 
-        user = self.adapter.save_user(request, google_login())
+        spend_invitation(request=request, user=user)
 
         invitation.refresh_from_db()
         self.assertEqual(invitation.accepted_by, user)
@@ -145,16 +190,129 @@ class SignupGateTests(TestCase):
         self.assertFalse(invitation.is_usable)
         self.assertNotIn(SESSION_KEY, request.session)
 
-    def test_the_account_keeps_the_name_and_email_from_google(self):
+    def test_it_tolerates_an_invitation_that_vanished_mid_flow(self):
+        """The adapters already refused without one; this is belt and braces
+        for a link revoked between the check and the account being created."""
         request = request_with_session()
-        remember_invitation(request, Invitation.objects.create(label="Anton"))
+        user = User.objects.create_user("anton")
 
-        user = self.adapter.save_user(
-            request, google_login(email="a@example.com", first_name="Anton")
+        spend_invitation(request=request, user=user)  # must not raise
+
+        self.assertNotIn(SESSION_KEY, request.session)
+
+
+@override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+class EmailCodeSignupTests(TestCase):
+    """End to end: an invited person with no Google account (ADR 0013)."""
+
+    def setUp(self):
+        # allauth throttles code emails through the cache ("1/10s/key" for
+        # confirm_email), and LocMemCache outlives a single test. Without this
+        # the second test in the class gets no mail and the failure looks like
+        # a broken template.
+        cache.clear()
+
+    def code_from_mail(self):
+        self.assertEqual(len(mail.outbox), 1, "expected exactly one email")
+        return extract_code(mail.outbox[0].body)
+
+    def test_an_invited_person_can_sign_up_with_any_email_address(self):
+        invitation = Invitation.objects.create(label="Anton")
+        self.client.get(invitation.get_absolute_url())
+
+        signup = self.client.post(
+            reverse("account_signup"), {"email": "anton@firma.dk"}, follow=True
+        )
+        self.assertEqual(signup.status_code, 200)
+
+        confirm = self.client.post(
+            reverse("account_email_verification_sent"),
+            {"code": self.code_from_mail()},
+            follow=True,
         )
 
-        self.assertEqual(user.first_name, "Anton")
-        self.assertEqual(user.email, "a@example.com")
+        self.assertEqual(confirm.status_code, 200)
+        user = User.objects.get(email="anton@firma.dk")
+        self.assertEqual(int(self.client.session["_auth_user_id"]), user.pk)
+        invitation.refresh_from_db()
+        self.assertEqual(invitation.accepted_by, user)
+        self.assertFalse(invitation.is_usable)
+
+    def test_the_account_gets_no_usable_password(self):
+        """ACCOUNT_SIGNUP_FIELDS omits them, so there is nothing to reset."""
+        invitation = Invitation.objects.create(label="Anton")
+        self.client.get(invitation.get_absolute_url())
+        self.client.post(reverse("account_signup"), {"email": "anton@firma.dk"})
+        self.client.post(
+            reverse("account_email_verification_sent"), {"code": self.code_from_mail()}
+        )
+
+        self.assertFalse(User.objects.get(email="anton@firma.dk").has_usable_password())
+
+    def test_signing_up_without_an_invitation_is_refused(self):
+        response = self.client.post(
+            reverse("account_signup"), {"email": "stranger@example.com"}, follow=True
+        )
+
+        self.assertTemplateUsed(response, "account/signup_closed.html")
+        self.assertFalse(User.objects.filter(email="stranger@example.com").exists())
+        self.assertEqual(mail.outbox, [])
+
+    def test_the_signup_page_is_refused_without_an_invitation(self):
+        response = self.client.get(reverse("account_signup"))
+        self.assertTemplateUsed(response, "account/signup_closed.html")
+
+
+@override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+class EmailCodeLoginTests(TestCase):
+    """End to end: a returning person asking for a sign-in code."""
+
+    def setUp(self):
+        cache.clear()  # see EmailCodeSignupTests.setUp
+        self.anton = User.objects.create_user("anton", email="anton@firma.dk")
+        EmailAddress.objects.create(
+            user=self.anton, email="anton@firma.dk", verified=True, primary=True
+        )
+
+    def code_from_mail(self):
+        self.assertEqual(len(mail.outbox), 1, "expected exactly one email")
+        return extract_code(mail.outbox[0].body)
+
+    def test_a_known_address_gets_a_code_that_logs_them_in(self):
+        self.client.post(reverse("account_request_login_code"), {"email": "anton@firma.dk"})
+
+        response = self.client.post(
+            reverse("account_confirm_login_code"), {"code": self.code_from_mail()}, follow=True
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(int(self.client.session["_auth_user_id"]), self.anton.pk)
+
+    def test_a_wrong_code_does_not_log_anyone_in(self):
+        self.client.post(reverse("account_request_login_code"), {"email": "anton@firma.dk"})
+
+        self.client.post(reverse("account_confirm_login_code"), {"code": "000000"})
+
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_an_unknown_address_creates_no_account_and_does_not_say_so(self):
+        """ACCOUNT_PREVENT_ENUMERATION: the screen must not reveal whether an
+        address has an account, so the mail carries the bad news instead."""
+        response = self.client.post(
+            reverse("account_request_login_code"), {"email": "stranger@example.com"}, follow=True
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(email="stranger@example.com").exists())
+        self.assertNotIn("_auth_user_id", self.client.session)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertNotIn("/accounts/signup/", mail.outbox[0].body)
+
+    def test_the_code_email_comes_from_the_configured_sender(self):
+        self.client.post(reverse("account_request_login_code"), {"email": "anton@firma.dk"})
+
+        self.assertEqual(mail.outbox[0].from_email, settings.DEFAULT_FROM_EMAIL)
+        self.assertIn("Ella", mail.outbox[0].subject)
 
 
 class ExistingAccountLinkingTests(TestCase):

@@ -68,7 +68,8 @@ half the problem.
 - Google is now in the login path. Anyone without a Google account cannot get
   in; that is true of everyone in the group today. If it stops being true, an
   email one-time-code provider can be added alongside, because allauth
-  supports several.
+  supports several. **Done in [0013](0013-email-sign-in-codes.md)**, which
+  adds emailed codes as a second way in and closes this gap.
 - Access policies no longer have to be remembered during a migration, and
   nothing about sign-on lives in a dashboard any more. The Zero Trust
   application should be **deleted**, not just loosened — as long as it exists

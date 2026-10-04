@@ -16,7 +16,8 @@ Cloudflare edge ─── TLS, "Always Use HTTPS", HSTS (ADR 0005)
   ▼
 cloudflared ──http──▶ Caddy ──http──▶ ella container :80
                      (shared,        gunicorn, 2 workers
-                      all sites)     Google sign-in, invite-only (ADR 0010)
+                      all sites)     Google or emailed code, invite-only
+                                       (ADR 0010, 0013)
                                      Login wall, public "/" (ADR 0006, 0012)
                                        │
                                        ▼

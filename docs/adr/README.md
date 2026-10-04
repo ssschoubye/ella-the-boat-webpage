@@ -19,6 +19,7 @@ set the old one's status to `Superseded by ADR-NNNN`.
 | [0010](0010-invitation-links-and-google-sign-in.md) | Invitation links and Google sign-in, instead of Cloudflare Access | Accepted |
 | [0011](0011-records-linked-to-accounts.md) | Records are linked to accounts | Accepted |
 | [0012](0012-public-front-page.md) | A public front page | Accepted |
+| [0013](0013-email-sign-in-codes.md) | Email sign-in codes alongside Google, sent through Resend | Accepted |
 
 ## Writing a new one
 

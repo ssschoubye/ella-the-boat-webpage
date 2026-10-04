@@ -1,0 +1,17 @@
+{% load socialaccount %}
+{# The two ways in. Shown on the login page and on an invitation page, so an
+   invited person meets exactly the same choice as a returning one. #}
+{% include "_google_button.html" %}
+
+<p class="signin-divider"><span>eller</span></p>
+
+<form method="post" action="{{ code_action_url }}" class="login-form">
+    {% csrf_token %}
+    <label for="id_email">Din e-mailadresse</label>
+    <input type="email" name="email" id="id_email" autocomplete="email"
+           inputmode="email" required placeholder="navn@eksempel.dk">
+    {% if redirect_field_value %}
+        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+    {% endif %}
+    <button type="submit">{{ code_action_label }}</button>
+</form>

@@ -8,10 +8,14 @@
     vedligehold.
 </p>
 
-{% include "_google_button.html" %}
+{# account_signup rather than the login code URL: this visitor has no account
+   yet, and asking for a login code would only mail them "no such account". #}
+{% url 'account_signup' as code_action_url %}
+{% include "_signin_options.html" with code_action_url=code_action_url code_action_label="Opret konto med e-mail" %}
 
 <p class="card-page__note">
-    Vi opretter din konto ud fra din Google-konto, så du skal ikke finde på en
-    adgangskode. Linket virker én gang.
+    Vælg selv. Med Google skal du ikke huske noget; med e-mail sender vi dig
+    en engangskode, og det virker med enhver adresse. Du skal ikke finde på en
+    adgangskode &mdash; siden har ingen. Linket virker én gang.
 </p>
 {% endblock %}

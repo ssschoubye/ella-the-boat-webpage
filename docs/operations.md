@@ -28,15 +28,22 @@ docker exec -it -u app ella python manage.py invite "Anton"
 
 `--days 7` for a shorter life.
 
-They open the link, press "Fortsæt med Google", and they are in. Their name
-appears in the app from their Google profile, so there is nothing to type in
-anywhere.
+They open the link and pick one of two ways in:
+
+- **"Fortsæt med Google"** — one tap, nothing to remember. Their name comes
+  from the Google profile.
+- **An email address** — any address at all, not just Gmail. They get a code,
+  type it in, and they are in ([ADR 0013](adr/0013-email-sign-in-codes.md)).
+
+Point people at Google if they have it: the credential is then an account with
+2FA on it rather than an inbox. The email route exists so that not having
+Google is never the reason someone cannot see the calendar.
 
 A few things worth knowing:
 
 - **Treat the link like a door code.** Anyone holding it can create an
-  account. Send it directly to the person, not to a group chat you do not
-  control.
+  account, by either route. Send it directly to the person, not to a group
+  chat you do not control.
 - Each link works **once** and expires after 30 days. If someone sits on it too
   long, make another; they are free.
 - Changed your mind before they used it? Open it in the admin and tick
@@ -59,9 +66,11 @@ There is no Access policy to edit any more, and nothing to deploy.
 
 ## Resetting the admin password
 
-Nobody in the group has a password, so there is nothing to reset for them — if
-they lose access to their Google account, that is Google's recovery flow, not
-ours.
+Nobody in the group has a password, so there is nothing to reset for them. If
+they lose access to their Google account, that is Google's recovery flow; if
+they lose the inbox they signed up with, invite them again and they will get a
+second account — tell them to sign in with the address they already used, or
+deactivate the old one.
 
 The one password is the superuser's, for `/admin/`:
 
@@ -95,6 +104,11 @@ and when:
 ```bash
 make logs SERVICE=ella | grep -E "Successful login|Invitation .* accepted"
 ```
+
+If someone says a sign-in code never arrived, check for an SMTP error in the
+same logs, then Resend's dashboard
+([security.md](security.md#checking-resend-works)). Google sign-in is
+unaffected by that failure, so most of the group will see nothing wrong.
 
 Logs also go to VictoriaLogs through the home server's Vector pipeline. The
 blackbox probe on `https://ella.molder.app/healthz/` raises the `SiteDown`

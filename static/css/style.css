@@ -872,6 +872,43 @@ a { color: inherit; }
     flex: none;
 }
 
+.signin-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1.25rem 0 0.25rem;
+    font-size: 0.78rem;
+    color: rgba(28, 37, 48, 0.5);
+}
+
+.signin-divider::before,
+.signin-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+}
+
+.code-resend {
+    margin-top: 0.85rem;
+    text-align: center;
+}
+
+.link-button {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    color: var(--sea);
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.link-button:hover {
+    color: var(--navy);
+}
+
 .card-page__lead {
     font-size: 0.95rem;
     line-height: 1.55;

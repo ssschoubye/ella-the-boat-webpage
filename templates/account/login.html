@@ -5,9 +5,16 @@
 {% block card %}
 <p class="card-page__lead">Log ind for at se kalender, filarkiv og vedligehold.</p>
 
-{% include "_google_button.html" %}
+{% if form.errors %}
+    <p class="card-page__error">Det kunne vi ikke logge dig ind med. Prøv en kode i stedet.</p>
+{% endif %}
+
+{% url 'account_request_login_code' as code_action_url %}
+{% include "_signin_options.html" with code_action_url=code_action_url code_action_label="Send mig en kode" %}
 
 <p class="card-page__note">
-    Har du ikke adgang endnu? Du skal have et invitationslink fra en i bådlauget.
+    Du behøver ingen adgangskode &mdash; vi sender en engangskode til din
+    e-mail. Har du ikke adgang endnu, skal du have et invitationslink fra en i
+    bådlauget.
 </p>
 {% endblock %}

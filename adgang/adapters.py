@@ -2,8 +2,12 @@
 
 The whole access model is here. There is no allow-list of email addresses
 anywhere; instead a visitor may create an account only while an unused
-invitation link is held in their session, which `views.invitation` puts there
-(ADR 0010).
+invitation link is held in their session, which `views.invitation` puts there.
+
+There are two ways in -- Google (ADR 0010) and a code emailed to any address
+(ADR 0013) -- so there are two adapters, and *both* have to refuse signup or
+the gate has a hole in it. Spending the invitation afterwards is shared, in
+`signals.py`, because it has to happen identically on both paths.
 """
 import logging
 
@@ -40,18 +44,16 @@ def forget_invitation(request):
     request.session.pop(SESSION_KEY, None)
 
 
-class NoLocalSignupAccountAdapter(DefaultAccountAdapter):
-    """No passwords, so no local signup either.
-
-    `SOCIALACCOUNT_ONLY` already hides the local login forms; this closes the
-    signup path itself in case a URL is reached directly.
-    """
+class InvitationOnlyAccountAdapter(DefaultAccountAdapter):
+    """Gates the email-code path."""
 
     def is_open_for_signup(self, request):
-        return False
+        return pending_invitation(request) is not None
 
 
 class InvitationOnlySocialAccountAdapter(DefaultSocialAccountAdapter):
+    """Gates the Google path."""
+
     def is_open_for_signup(self, request, sociallogin):
         return pending_invitation(request) is not None
 
@@ -59,9 +61,9 @@ class InvitationOnlySocialAccountAdapter(DefaultSocialAccountAdapter):
         """Attach Google to an account that already has the same email.
 
         Without this, signing in with Google as someone who already has a
-        local account -- in practice the `createsuperuser` break-glass admin,
-        which is likely to use the owner's own Google address -- fails with an
-        "email already in use" error and no way forward.
+        local account -- the `createsuperuser` break-glass admin, or anyone
+        who signed up with an email code and later presses the Google button
+        -- fails with an "email already in use" error and no way forward.
 
         Only a provider-verified address is matched. Google verifies the
         addresses it hands out, and an unverified one would let anyone claim
@@ -80,18 +82,3 @@ class InvitationOnlySocialAccountAdapter(DefaultSocialAccountAdapter):
 
         logger.info("Linking Google login to existing account %s", user.pk)
         sociallogin.connect(request, user)
-
-    def save_user(self, request, sociallogin, form=None):
-        """Create the account and spend the invitation that allowed it.
-
-        `is_open_for_signup` has already refused if there was no usable
-        invitation, so re-fetching here is belt and braces -- but it is also
-        where the link gets marked used, which has to happen exactly once.
-        """
-        user = super().save_user(request, sociallogin, form)
-        invitation = pending_invitation(request)
-        if invitation is not None:
-            invitation.accept(user)
-            logger.info("Invitation %s accepted by %s", invitation.pk, user.pk)
-        forget_invitation(request)
-        return user

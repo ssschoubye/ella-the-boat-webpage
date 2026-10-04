@@ -64,9 +64,10 @@ MIDDLEWARE = [
 ]
 
 # ---------------------------------------------------------------- sign-on
-# Google sign-in through allauth, and signing up requires an unused invitation
-# link. There is no self-service password login and no list of allowed emails
-# to maintain: see ADR 0010 and docs/security.md.
+# Two ways in, and signing up requires an unused invitation link either way:
+# Google (ADR 0010), or a one-time code emailed to any address at all
+# (ADR 0013). There is no password login and no list of allowed emails to
+# maintain. See docs/security.md.
 #
 # The one password form left in the site is /admin/, which django-axes locks
 # out after repeated failures. It is the break-glass path for the superuser.
@@ -93,20 +94,62 @@ PUBLIC_BASE_URL = env("DJANGO_PUBLIC_BASE_URL", default="https://ella.molder.app
 INVITATION_VALID_DAYS = env.int("DJANGO_INVITATION_VALID_DAYS", default=30)
 
 # --- allauth ---
-# Nobody gets a password, so there is nothing to reset and no SMTP to set up.
-SOCIALACCOUNT_ONLY = True
-ACCOUNT_EMAIL_VERIFICATION = "none"
-# Google has already verified the address, and we cannot send mail anyway.
+# Nobody gets a password. SOCIALACCOUNT_ONLY is deliberately NOT set: it would
+# disable the whole local-account machinery, and the email code path needs it.
+# What keeps passwords out is ACCOUNT_SIGNUP_FIELDS below, which omits them, so
+# accounts are created with an unusable password and there is nothing to reset.
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*"]
+
+# Email codes, not links: a code can be read off a phone and typed into the
+# laptop the browser is already open on, and it cannot be prefetched by a
+# mail client the way a one-click link can.
+ACCOUNT_LOGIN_BY_CODE_ENABLED = True
+ACCOUNT_LOGIN_BY_CODE_TIMEOUT = 10 * 60
+ACCOUNT_LOGIN_BY_CODE_MAX_ATTEMPTS = 3
+
+# A local signup has to prove it owns the address, by the same kind of code.
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_EMAIL_VERIFICATION_BY_CODE_ENABLED = True
+# Google has already verified the address it hands us, so a social signup is
+# not asked to do it again.
 SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
+
+# Do not confirm or deny that an address has an account. Asking for a code for
+# an unknown address sends a "no such account" mail instead of saying so on
+# screen, which is also why the request form never reports failure.
+ACCOUNT_PREVENT_ENUMERATION = True
+
+# allauth's own per-view limits are left at their defaults, which are already
+# strict where it matters: 3 code requests per minute per address, 20 per
+# minute per IP, and 3 wrong codes before the attempt is dead. Those last
+# three live in the session rather than the cache, so a wrong-code brute force
+# is bounded even though the default LocMemCache is per-gunicorn-worker.
+ACCOUNT_EMAIL_SUBJECT_PREFIX = "[Ella] "
 # Go straight from Google back into the site: no intermediate signup form to
 # fill in. This is the whole point of the design.
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
 ACCOUNT_LOGOUT_ON_GET = False
 
-# These two adapters are what make the site invite-only.
-ACCOUNT_ADAPTER = "adgang.adapters.NoLocalSignupAccountAdapter"
+# These two adapters are what make the site invite-only. BOTH matter now:
+# the account adapter gates the email path, the social one gates Google.
+ACCOUNT_ADAPTER = "adgang.adapters.InvitationOnlyAccountAdapter"
 SOCIALACCOUNT_ADAPTER = "adgang.adapters.InvitationOnlySocialAccountAdapter"
+
+# --- sending mail ---
+# Only ever used for sign-in and verification codes; the site sends no other
+# mail. The console backend is the default so local development needs no SMTP
+# at all -- the code is printed in the runserver output. prod.py switches to
+# real SMTP.
+EMAIL_BACKEND = env("DJANGO_EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
+EMAIL_HOST = env("DJANGO_EMAIL_HOST", default="")
+EMAIL_PORT = env.int("DJANGO_EMAIL_PORT", default=587)
+EMAIL_HOST_USER = env("DJANGO_EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("DJANGO_EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_TLS = env.bool("DJANGO_EMAIL_USE_TLS", default=True)
+EMAIL_TIMEOUT = env.int("DJANGO_EMAIL_TIMEOUT", default=10)
+DEFAULT_FROM_EMAIL = env("DJANGO_DEFAULT_FROM_EMAIL", default="Ella <noreply@molder.app>")
 
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
