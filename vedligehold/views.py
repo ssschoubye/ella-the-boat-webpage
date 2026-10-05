@@ -71,6 +71,33 @@ def ticket_create(request):
     return render(request, "vedligehold/ticket_form.html", {"form": form})
 
 
+def ticket_edit(request, pk):
+    ticket = get_object_or_404(Ticket, pk=pk)
+    if request.method == "POST":
+        old_status = ticket.status
+        form = TicketForm(request.POST, instance=ticket)
+        if form.is_valid():
+            ticket = form.save(commit=False)
+            # The form has already written the new status onto the instance;
+            # put the old one back so set_status() sees the change and keeps
+            # completed_at right.
+            new_status, ticket.status = ticket.status, old_status
+            ticket.set_status(new_status)
+            ticket.save()
+            return redirect("vedligehold_ticket_detail", pk=ticket.pk)
+    else:
+        form = TicketForm(instance=ticket)
+    return render(request, "vedligehold/ticket_form.html", {"form": form, "ticket": ticket})
+
+
+@require_POST
+def ticket_delete(request, pk):
+    ticket = get_object_or_404(Ticket, pk=pk)
+    was_archived = ticket.archived
+    ticket.delete()  # its comments go with it (CASCADE)
+    return redirect("vedligehold_archive" if was_archived else "vedligehold")
+
+
 def ticket_detail(request, pk):
     ticket = get_object_or_404(Ticket, pk=pk)
     if request.method == "POST":

@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Ny opgave &middot; Vedligehold &middot; Ella{% endblock %}
+{% block title %}{% if ticket %}Rediger opgave{% else %}Ny opgave{% endif %} &middot; Vedligehold &middot; Ella{% endblock %}
 
 {% block content %}
 <section class="page-header">
     <p class="page-header__eyebrow">Vedligehold</p>
-    <h1>Ny opgave</h1>
+    <h1>{% if ticket %}Rediger opgave{% else %}Ny opgave{% endif %}</h1>
 </section>
 
 <form method="post" class="form-card">
@@ -30,8 +30,8 @@
     </div>
 
     <div class="form-actions">
-        <button type="submit" class="button-primary">Opret opgave</button>
-        <a class="button-secondary" href="{% url 'vedligehold' %}">Annuller</a>
+        <button type="submit" class="button-primary">{% if ticket %}Gem ændringer{% else %}Opret opgave{% endif %}</button>
+        <a class="button-secondary" href="{% if ticket %}{% url 'vedligehold_ticket_detail' ticket.pk %}{% else %}{% url 'vedligehold' %}{% endif %}">Annuller</a>
     </div>
 </form>
 {% endblock %}

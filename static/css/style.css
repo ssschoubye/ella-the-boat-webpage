@@ -1077,6 +1077,27 @@ a { color: inherit; }
     background: rgba(178, 46, 46, 0.16);
 }
 
+/* Same shape as .button-danger, in green, for "Rediger". */
+.button-edit {
+    display: inline-block;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #23683f;
+    background: rgba(46, 125, 79, 0.08);
+    border: 1px solid rgba(46, 125, 79, 0.35);
+    border-radius: 8px;
+    padding: 0.55rem 1.1rem;
+    text-decoration: none;
+    text-align: center;
+    white-space: nowrap;
+    transition: background 0.15s ease;
+}
+
+.button-edit:hover {
+    background: rgba(46, 125, 79, 0.16);
+}
+
 .form-card--delete {
     margin-top: 1.25rem;
     margin-bottom: 1.25rem;
@@ -1982,6 +2003,10 @@ body.event-modal-open {
     .ticket__actions {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .ticket__actions .button-edit {
+        align-self: flex-start;
     }
 
     .ticket__move-actions {
