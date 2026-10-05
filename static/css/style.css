@@ -21,6 +21,19 @@ body {
     line-height: 1.5;
 }
 
+/* Pages built on base.html: main grows so the footer sits at the bottom of
+   the window even when there is little content (an empty calendar list). */
+.site {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+}
+
+.site > main {
+    flex: 1 0 auto;
+}
+
 .wrap {
     max-width: 1080px;
     margin: 0 auto;
@@ -370,6 +383,36 @@ a { color: inherit; }
     flex-direction: column;
     gap: 0.3rem;
     margin-bottom: 0.4rem;
+}
+
+/* A day cell is a link to "Tilføj tur" for that date. The link is stretched
+   over the whole cell underneath the bookings, which sit above it so they
+   still open their own modal. */
+.calendar__day,
+.week-day {
+    position: relative;
+}
+
+.calendar__day-add {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    transition: background 0.15s ease;
+}
+
+.calendar__day-add:hover {
+    background: rgba(19, 64, 116, 0.04);
+}
+
+.calendar__day-add:focus-visible {
+    outline: 2px solid var(--sea);
+    outline-offset: 1px;
+}
+
+.calendar__booking,
+.week-booking {
+    position: relative;
+    z-index: 1;
 }
 
 .calendar__day--muted {
@@ -962,6 +1005,13 @@ a { color: inherit; }
     outline: none;
     border-color: var(--sea-light);
     background: #fff;
+}
+
+/* Only number inputs: flatpickr's date fields are read-only too. */
+.form-field input[type="number"]:read-only {
+    color: #8a93a0;
+    background: transparent;
+    cursor: default;
 }
 
 .form-field__errors {

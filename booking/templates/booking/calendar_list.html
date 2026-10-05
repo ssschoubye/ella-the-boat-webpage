@@ -31,7 +31,7 @@
                             data-end="{{ booking.end_date|danish_datetime }}"
                             data-notes="{{ booking.notes }}"
                             data-edit-url="{% url 'rediger_tur' booking.pk %}">
-                        <span class="upcoming__dates">{{ booking.start_date|date:"j." }} kl. {{ booking.start_date|date:"H:i" }}{% if booking.end_date.date != booking.start_date.date %} &ndash; {{ booking.end_date|date:"j." }} kl. {{ booking.end_date|date:"H:i" }}{% else %}&ndash;{{ booking.end_date|date:"H:i" }}{% endif %}</span>
+                        <span class="upcoming__dates">{{ booking.start_date|danish_weekday }} {{ booking.start_date|date:"j." }} kl. {{ booking.start_date|date:"H:i" }}{% if booking.end_date.date != booking.start_date.date %} &ndash; {{ booking.end_date|danish_weekday }} {{ booking.end_date|date:"j." }} kl. {{ booking.end_date|date:"H:i" }}{% else %}&ndash;{{ booking.end_date|date:"H:i" }}{% endif %}</span>
                         <span class="upcoming__title">{{ booking.title }}</span>
                         <span class="upcoming__booker">{{ booking.booker|person }}</span>
                     </button>
@@ -60,7 +60,7 @@
                             data-end="{{ booking.end_date|danish_datetime }}"
                             data-notes="{{ booking.notes }}"
                             data-edit-url="{% url 'rediger_tur' booking.pk %}">
-                        <span class="upcoming__dates">{{ booking.start_date|date:"j." }} kl. {{ booking.start_date|date:"H:i" }}{% if booking.end_date.date != booking.start_date.date %} &ndash; {{ booking.end_date|date:"j." }} kl. {{ booking.end_date|date:"H:i" }}{% else %}&ndash;{{ booking.end_date|date:"H:i" }}{% endif %}</span>
+                        <span class="upcoming__dates">{{ booking.start_date|danish_weekday }} {{ booking.start_date|date:"j." }} kl. {{ booking.start_date|date:"H:i" }}{% if booking.end_date.date != booking.start_date.date %} &ndash; {{ booking.end_date|danish_weekday }} {{ booking.end_date|date:"j." }} kl. {{ booking.end_date|date:"H:i" }}{% else %}&ndash;{{ booking.end_date|date:"H:i" }}{% endif %}</span>
                         <span class="upcoming__title">{{ booking.title }}</span>
                         <span class="upcoming__booker">{{ booking.booker|person }}</span>
                     </button>
