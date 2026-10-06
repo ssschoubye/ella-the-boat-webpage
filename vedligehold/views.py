@@ -30,18 +30,15 @@ def board(request):
     for i, (value, label) in enumerate(STATUS_CHOICES):
         prev_status = STATUS_CHOICES[i - 1] if i > 0 else None
         next_status = STATUS_CHOICES[i + 1] if i < len(STATUS_CHOICES) - 1 else None
-        skip_targets = {value}
-        if prev_status:
-            skip_targets.add(prev_status[0])
-        if next_status:
-            skip_targets.add(next_status[0])
         columns.append({
             "value": value,
             "label": label,
             "tickets": tickets.filter(status=value),
             "prev_status": prev_status,
             "next_status": next_status,
-            "skip_statuses": [c for c in STATUS_CHOICES if c[0] not in skip_targets],
+            # Every other column, neighbours included: the arrows are a
+            # shortcut, not the only way to reach the next column over.
+            "move_statuses": [c for c in STATUS_CHOICES if c[0] != value],
         })
 
     context = {

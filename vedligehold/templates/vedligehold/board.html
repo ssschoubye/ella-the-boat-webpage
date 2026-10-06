@@ -49,13 +49,13 @@
                                 <button type="submit" class="board__move-btn" title="Flyt til: {{ column.prev_status.1 }}" aria-label="Flyt til {{ column.prev_status.1 }}">&larr;</button>
                             </form>
                             {% endif %}
-                            {% if column.skip_statuses %}
+                            {% if column.move_statuses %}
                             <form method="post" action="{% url 'vedligehold_ticket_move' ticket.pk %}" class="board__move-jump">
                                 {% csrf_token %}
                                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
                                 <select name="status" onchange="this.form.submit()" aria-label="Flyt til andet stadie">
                                     <option value="">Flyt til&hellip;</option>
-                                    {% for value, label in column.skip_statuses %}
+                                    {% for value, label in column.move_statuses %}
                                     <option value="{{ value }}">{{ label }}</option>
                                     {% endfor %}
                                 </select>

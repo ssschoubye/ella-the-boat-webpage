@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import STATUS_FAERDIG, STATUS_ONSKE, Comment, Ticket
+from .models import STATUS_CHOICES, STATUS_FAERDIG, STATUS_ONSKE, Comment, Ticket
 
 User = get_user_model()
 
@@ -129,3 +129,16 @@ class EditAndDeleteTests(TestCase):
         self.assertRedirects(response, detail)
         self.ticket.refresh_from_db()
         self.assertEqual(self.ticket.title, "Skifte zinkanode")
+
+
+class BoardMoveTests(TestCase):
+    def setUp(self):
+        self.client.force_login(User.objects.create_user("anton"))
+
+    def test_every_column_offers_every_other_column_to_move_to(self):
+        columns = self.client.get(reverse("vedligehold")).context["columns"]
+
+        for column in columns:
+            offered = {value for value, _ in column["move_statuses"]}
+            expected = {value for value, _ in STATUS_CHOICES} - {column["value"]}
+            self.assertEqual(offered, expected, column["label"])
