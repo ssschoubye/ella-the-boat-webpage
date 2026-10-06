@@ -54,13 +54,13 @@
             {% csrf_token %}
             <button type="submit" class="button-danger">Arkiver</button>
         </form>
+        <a class="button-edit" href="{% url 'vedligehold_ticket_edit' ticket.pk %}">Rediger</a>
         {% else %}
         <form method="post" action="{% url 'vedligehold_ticket_reopen' ticket.pk %}">
             {% csrf_token %}
             <button type="submit" class="button-primary">Genåbn</button>
         </form>
         {% endif %}
-        <a class="button-edit" href="{% url 'vedligehold_ticket_edit' ticket.pk %}">Rediger</a>
         <form method="post" action="{% url 'vedligehold_ticket_delete' ticket.pk %}" onsubmit="return confirm('Slet \'{{ ticket.title|escapejs }}\' og dens kommentarer? Det kan ikke fortrydes.');">
             {% csrf_token %}
             <button type="submit" class="button-danger">Slet</button>

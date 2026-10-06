@@ -73,6 +73,10 @@ def ticket_create(request):
 
 def ticket_edit(request, pk):
     ticket = get_object_or_404(Ticket, pk=pk)
+    # The status buttons are hidden on archived tickets, and so is Rediger:
+    # a status set here would leave the ticket archived and off the board.
+    if ticket.archived:
+        return redirect("vedligehold_ticket_detail", pk=ticket.pk)
     if request.method == "POST":
         old_status = ticket.status
         form = TicketForm(request.POST, instance=ticket)

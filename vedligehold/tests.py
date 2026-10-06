@@ -117,3 +117,15 @@ class EditAndDeleteTests(TestCase):
 
         self.assertContains(response, reverse("vedligehold_ticket_edit", args=[self.ticket.pk]))
         self.assertContains(response, reverse("vedligehold_ticket_delete", args=[self.ticket.pk]))
+
+    def test_an_archived_ticket_cannot_be_edited(self):
+        self.ticket.archived = True
+        self.ticket.save()
+        detail = reverse("vedligehold_ticket_detail", args=[self.ticket.pk])
+
+        self.assertNotContains(self.client.get(detail), reverse("vedligehold_ticket_edit", args=[self.ticket.pk]))
+        response = self.edit(title="Ændret", status=STATUS_FAERDIG)
+
+        self.assertRedirects(response, detail)
+        self.ticket.refresh_from_db()
+        self.assertEqual(self.ticket.title, "Skifte zinkanode")
