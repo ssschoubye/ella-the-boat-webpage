@@ -19,6 +19,12 @@
     </div>
 
     <div class="form-field">
+        <label for="{{ form.folder.id_for_label }}">{{ form.folder.label }}</label>
+        {{ form.folder }}
+        {% if form.folder.errors %}<p class="form-field__errors">{{ form.folder.errors|join:", " }}</p>{% endif %}
+    </div>
+
+    <div class="form-field">
         <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
         {{ form.title }}
         <p class="form-field__hint">Lades feltet tomt, bruges filnavnet som titel.</p>

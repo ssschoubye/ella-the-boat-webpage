@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Rediger fil &middot; Filarkiv &middot; Ella{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <p class="page-header__eyebrow">Filarkiv &middot; {{ file.filename }}</p>
+    <h1>Rediger fil</h1>
+</section>
+
+<form method="post" class="form-card">
+    {% csrf_token %}
+
+    <div class="form-field">
+        <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
+        {{ form.title }}
+        {% if form.title.errors %}<p class="form-field__errors">{{ form.title.errors|join:", " }}</p>{% endif %}
+    </div>
+
+    <div class="form-field">
+        <label for="{{ form.folder.id_for_label }}">{{ form.folder.label }}</label>
+        {{ form.folder }}
+        <p class="form-field__hint">Vælg en anden mappe for at flytte filen.</p>
+        {% if form.folder.errors %}<p class="form-field__errors">{{ form.folder.errors|join:", " }}</p>{% endif %}
+    </div>
+
+    <div class="form-field">
+        <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+        {{ form.description }}
+        {% if form.description.errors %}<p class="form-field__errors">{{ form.description.errors|join:", " }}</p>{% endif %}
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="button-primary">Gem ændringer</button>
+        <a class="button-secondary" href="{% url 'filarkiv_folder' file.folder_id %}">Annuller</a>
+    </div>
+</form>
+
+<form method="post" action="{% url 'filarkiv_delete' file.pk %}" class="form-card form-card--delete"
+      onsubmit="return confirm('Slet filen \'{{ file.title|escapejs }}\'? Det kan ikke fortrydes.');">
+    {% csrf_token %}
+    <div>
+        <p class="delete-block__title">Slet filen</p>
+        <p class="form-field__hint">Filen fjernes fra arkivet og kan ikke gendannes.</p>
+    </div>
+    <button type="submit" class="button-danger">Slet</button>
+</form>
+{% endblock %}

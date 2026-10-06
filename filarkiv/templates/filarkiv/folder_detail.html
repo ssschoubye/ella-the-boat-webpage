@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ folder.name }} &middot; Filarkiv &middot; Ella{% endblock %}
+
+{% block content %}
+<section class="page-header page-header--split">
+    <div>
+        <nav class="archive__breadcrumbs" aria-label="Mapper">
+            <a href="{% url 'filarkiv' %}">Filarkiv</a>
+            {% for crumb in breadcrumbs %}{% if not forloop.last %}
+            <span aria-hidden="true">/</span> <a href="{% url 'filarkiv_folder' crumb.pk %}">{{ crumb.name }}</a>
+            {% endif %}{% endfor %}
+        </nav>
+        <h1>{{ folder.name }}</h1>
+    </div>
+    <div class="archive__header-actions">
+        <a class="button-secondary" href="{% url 'filarkiv_folder_create' folder.pk %}">+ Ny mappe</a>
+        <a class="button-primary" href="{% url 'filarkiv_upload' %}?mappe={{ folder.pk }}">+ Upload fil</a>
+    </div>
+</section>
+
+<section class="archive">
+    {% if children %}
+    <ul class="archive__folders">
+        {% for child in children %}
+        <li><a class="archive__folder" href="{% url 'filarkiv_folder' child.pk %}">{{ child.name }}</a></li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if images %}
+    <ul class="archive__grid">
+        {% for f in images %}
+        <li>
+            <button type="button" class="archive__tile js-lightbox-trigger"
+                    data-full="{% url 'filarkiv_view' f.pk %}"
+                    data-title="{{ f.title }}"
+                    data-download="{% url 'filarkiv_download' f.pk %}"
+                    data-edit="{% url 'filarkiv_edit' f.pk %}">
+                {% if f.thumbnail %}
+                <img src="{% url 'filarkiv_thumbnail' f.pk %}" alt="{{ f.title }}" loading="lazy">
+                {% else %}
+                <span class="archive__ext">{{ f.extension }}</span>
+                {% endif %}
+                <span class="archive__tile-title">{{ f.title }}</span>
+            </button>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if documents %}
+    <ul class="archive__list">
+        {% for f in documents %}{% include "filarkiv/_file_row.html" %}{% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if is_empty %}
+    <p class="archive__empty">Mappen er tom.</p>
+    {% endif %}
+
+    {% if not folder.is_root %}
+    <div class="archive__folder-actions">
+        <a class="button-edit" href="{% url 'filarkiv_folder_rename' folder.pk %}">Omdøb mappe</a>
+        {% if can_delete %}
+        <form method="post" action="{% url 'filarkiv_folder_delete' folder.pk %}"
+              onsubmit="return confirm('{% if is_empty %}Slet mappen \'{{ folder.name|escapejs }}\'?{% else %}Slet mappen \'{{ folder.name|escapejs }}\' med alle undermapper og filer? Det kan ikke fortrydes.{% endif %}');">
+            {% csrf_token %}
+            <button type="submit" class="button-danger">{% if is_empty %}Slet mappe{% else %}Slet mappe og indhold{% endif %}</button>
+        </form>
+        {% else %}
+        <p class="archive__hint">Mappen kan kun slettes, når den er tom.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+</section>
+
+{% if images %}
+<div class="lightbox" id="lightbox" hidden>
+    <div class="lightbox__backdrop" data-close></div>
+    <figure class="lightbox__figure" role="dialog" aria-modal="true" aria-labelledby="lightbox-title" tabindex="-1">
+        <img class="lightbox__image" alt="">
+        <figcaption class="lightbox__bar">
+            <span class="lightbox__title" id="lightbox-title"></span>
+            <span class="lightbox__counter"></span>
+            <a class="lightbox__link" data-field="download">Hent</a>
+            <a class="lightbox__link" data-field="edit">Rediger</a>
+        </figcaption>
+    </figure>
+    <button type="button" class="lightbox__nav lightbox__nav--prev" data-step="-1" aria-label="Forrige billede">&lsaquo;</button>
+    <button type="button" class="lightbox__nav lightbox__nav--next" data-step="1" aria-label="Næste billede">&rsaquo;</button>
+    <button type="button" class="lightbox__close" data-close aria-label="Luk">&times;</button>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if images %}<script src="{% static 'js/lightbox.js' %}"></script>{% endif %}
+{% endblock %}
