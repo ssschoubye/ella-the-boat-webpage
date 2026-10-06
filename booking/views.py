@@ -1,6 +1,6 @@
 import calendar
 import uuid
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
 
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -216,8 +216,21 @@ def add_booking(request):
                 reverse("kalender_month", args=[booking.start_date.year, booking.start_date.month])
             )
     else:
-        form = BookingForm()
+        form = BookingForm(initial=_initial_for_day(request.GET.get("dato")))
     return render(request, "booking/booking_form.html", {"form": form, "booking": None})
+
+
+def _initial_for_day(value):
+    """Prefill start and end when the form is opened from a calendar day
+    (``?dato=YYYY-MM-DD``). Anything unparseable just gives an empty form."""
+    try:
+        day = date.fromisoformat(value or "")
+    except ValueError:
+        return {}
+    return {
+        "start_date": datetime.combine(day, time(9, 0)),
+        "end_date": datetime.combine(day, time(13, 0)),
+    }
 
 
 def edit_booking(request, pk):

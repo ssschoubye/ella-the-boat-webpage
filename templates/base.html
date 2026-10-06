@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="{% load static %}{% static 'css/style.css' %}">
     {% block extra_head %}{% endblock %}
 </head>
-<body>
+<body class="site">
     <header class="site-header">
         <div class="wrap site-header__inner">
             <a class="brand" href="{% url 'home' %}">
@@ -26,7 +26,9 @@
                     <nav class="nav">
                         <a href="{% url 'home' %}">Forside</a>
                         <a href="{% url 'kalender' %}">Kalender</a>
+                        {% comment %}Hidden until the logbog is built -- remove the comment tags to show it again.
                         <a href="{% url 'logbog' %}">Logbog</a>
+                        {% endcomment %}
                         <a href="{% url 'filarkiv' %}">Filarkiv</a>
                         <a href="{% url 'vedligehold' %}">Vedligehold</a>
                         <a href="{% url 'skader' %}">Skader</a>

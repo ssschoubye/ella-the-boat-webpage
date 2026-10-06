@@ -21,6 +21,19 @@ body {
     line-height: 1.5;
 }
 
+/* Pages built on base.html: main grows so the footer sits at the bottom of
+   the window even when there is little content (an empty calendar list). */
+.site {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+}
+
+.site > main {
+    flex: 1 0 auto;
+}
+
 .wrap {
     max-width: 1080px;
     margin: 0 auto;
@@ -370,6 +383,36 @@ a { color: inherit; }
     flex-direction: column;
     gap: 0.3rem;
     margin-bottom: 0.4rem;
+}
+
+/* A day cell is a link to "Tilføj tur" for that date. The link is stretched
+   over the whole cell underneath the bookings, which sit above it so they
+   still open their own modal. */
+.calendar__day,
+.week-day {
+    position: relative;
+}
+
+.calendar__day-add {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    transition: background 0.15s ease;
+}
+
+.calendar__day-add:hover {
+    background: rgba(19, 64, 116, 0.04);
+}
+
+.calendar__day-add:focus-visible {
+    outline: 2px solid var(--sea);
+    outline-offset: 1px;
+}
+
+.calendar__booking,
+.week-booking {
+    position: relative;
+    z-index: 1;
 }
 
 .calendar__day--muted {
@@ -964,6 +1007,13 @@ a { color: inherit; }
     background: #fff;
 }
 
+/* Only number inputs: flatpickr's date fields are read-only too. */
+.form-field input[type="number"]:read-only {
+    color: #8a93a0;
+    background: transparent;
+    cursor: default;
+}
+
 .form-field__errors {
     color: #a32424;
     font-size: 0.8rem;
@@ -1025,6 +1075,27 @@ a { color: inherit; }
 
 .button-danger:hover {
     background: rgba(178, 46, 46, 0.16);
+}
+
+/* Same shape as .button-danger, in green, for "Rediger". */
+.button-edit {
+    display: inline-block;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #23683f;
+    background: rgba(46, 125, 79, 0.08);
+    border: 1px solid rgba(46, 125, 79, 0.35);
+    border-radius: 8px;
+    padding: 0.55rem 1.1rem;
+    text-decoration: none;
+    text-align: center;
+    white-space: nowrap;
+    transition: background 0.15s ease;
+}
+
+.button-edit:hover {
+    background: rgba(46, 125, 79, 0.16);
 }
 
 .form-card--delete {
@@ -1932,6 +2003,10 @@ body.event-modal-open {
     .ticket__actions {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .ticket__actions .button-edit {
+        align-self: flex-start;
     }
 
     .ticket__move-actions {

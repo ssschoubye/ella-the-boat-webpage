@@ -1,3 +1,6 @@
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -55,6 +58,18 @@ class BookerAttributionTests(TestCase):
         self.assertEqual(bookings.count(), 3)
         self.assertEqual({b.booker_id for b in bookings}, {self.anton.pk})
 
+    def test_a_trip_that_does_not_repeat_is_saved_once_whatever_the_count(self):
+        self.post_a_trip(repeat_type="none", repeat_count=1)
+        self.post_a_trip(repeat_type="none", repeat_count=7)
+
+        self.assertEqual(Booking.objects.count(), 2)
+
+    def test_a_repeating_trip_needs_at_least_two(self):
+        response = self.post_a_trip(repeat_type="weekly", repeat_count=1)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Booking.objects.exists())
+
     def test_editing_someone_elses_trip_does_not_reassign_it(self):
         """Everyone may edit everything here, but the record of who booked it
         should survive a correction to the dates."""
@@ -90,3 +105,41 @@ class DeletedAccountTests(TestCase):
         user.delete()
 
         self.assertIsNone(Booking.objects.get().booker)
+
+
+class AddFromCalendarDayTests(TestCase):
+    """Clicking a day in the calendar opens the form with that day filled in."""
+
+    def setUp(self):
+        self.client.force_login(User.objects.create_user("anton"))
+
+    def test_a_day_prefills_start_and_end(self):
+        response = self.client.get(reverse("tilfoj_tur") + "?dato=2026-07-04")
+        self.assertContains(response, 'value="2026-07-04T09:00"')
+        self.assertContains(response, 'value="2026-07-04T13:00"')
+
+    def test_a_garbled_day_gives_an_empty_form(self):
+        response = self.client.get(reverse("tilfoj_tur") + "?dato=nonsense")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'value="20')
+
+    def test_month_and_week_days_link_to_the_form(self):
+        link = reverse("tilfoj_tur") + "?dato=2026-07-04"
+        self.assertContains(self.client.get(reverse("kalender_month", args=[2026, 7])), link)
+        self.assertContains(self.client.get(reverse("kalender_uge_at", args=[2026, 27])), link)
+
+
+class ListViewTests(TestCase):
+    def setUp(self):
+        self.client.force_login(User.objects.create_user("anton"))
+
+    def test_dates_show_the_weekday(self):
+        # 2099-07-04 is a Saturday, 2099-07-05 a Sunday.
+        Booking.objects.create(
+            title="Weekendtur",
+            start_date=datetime(2099, 7, 4, 9, tzinfo=ZoneInfo("Europe/Copenhagen")),
+            end_date=datetime(2099, 7, 5, 17, tzinfo=ZoneInfo("Europe/Copenhagen")),
+        )
+        response = self.client.get(reverse("kalender_liste"))
+        self.assertContains(response, "Lør 4. kl. 09:00")
+        self.assertContains(response, "Søn 5. kl. 17:00")

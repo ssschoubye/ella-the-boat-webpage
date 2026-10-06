@@ -32,6 +32,7 @@
     <div class="calendar__grid">
         {% for day in week %}
         <div class="calendar__day{% if not day.in_month %} calendar__day--muted{% endif %}{% if day.is_today %} calendar__day--today{% endif %}">
+            <a class="calendar__day-add" href="{% url 'tilfoj_tur' %}?dato={{ day.date|date:'Y-m-d' }}" aria-label="Tilføj tur {{ day.date|date:'j/n' }}"></a>
             <span class="calendar__date">{{ day.date.day }}</span>
             {% for entry in day.entries %}
             <button type="button"

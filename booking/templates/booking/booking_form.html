@@ -38,7 +38,7 @@
     <div class="form-field">
         <label for="{{ form.end_date.id_for_label }}">{{ form.end_date.label }}</label>
         {{ form.end_date }}
-        <p class="form-field__hint">Samme som startdato ved en endagstur.</p>
+        <p class="form-field__hint">{% if booking %}Samme som startdato ved en endagstur.{% else %}Sættes til 4 timer efter start. Du kan ændre den.{% endif %}</p>
         {% if form.end_date.errors %}<p class="form-field__errors">{{ form.end_date.errors|join:", " }}</p>{% endif %}
     </div>
 
@@ -100,9 +100,10 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         flatpickr.localize(flatpickr.l10ns.da);
+        var pickers = {};
         document.querySelectorAll(".js-datetime-picker").forEach(function (el) {
             var originalId = el.id;
-            var fp = flatpickr(el, {
+            var fp = pickers[el.name] = flatpickr(el, {
                 enableTime: true,
                 time_24hr: true,
                 dateFormat: "Y-m-d\\TH:i",
@@ -115,14 +116,52 @@
             }
         });
 
-        var repeatType = document.getElementById("{{ form.repeat_type.id_for_label }}");
-        var repeatCountField = document.getElementById("repeat-count-field");
-        if (repeatType && repeatCountField) {
-            var toggleRepeatCount = function () {
-                repeatCountField.hidden = repeatType.value === "none";
+        {% if not booking %}
+        // A new trip's end follows its start, DEFAULT_HOURS later, until the
+        // end has been picked by hand -- then it is left alone.
+        var DEFAULT_HOURS = 4;
+        var start = pickers.start_date;
+        var end = pickers.end_date;
+        if (start && end) {
+            var defaultEnd = function (date) {
+                return new Date(date.getTime() + DEFAULT_HOURS * 60 * 60 * 1000);
             };
-            toggleRepeatCount();
-            repeatType.addEventListener("change", toggleRepeatCount);
+            var endSetByHand = function () {
+                var s = start.selectedDates[0];
+                var e = end.selectedDates[0];
+                return !!e && !(s && e.getTime() === defaultEnd(s).getTime());
+            };
+            // A form sent back with errors keeps an end the person chose.
+            var endTouched = endSetByHand();
+            start.config.onChange.push(function (dates) {
+                if (dates[0] && !endTouched) end.setDate(defaultEnd(dates[0]), false);
+            });
+            end.config.onChange.push(function () {
+                endTouched = endSetByHand();
+            });
+        }
+        {% endif %}
+
+        var repeatType = document.getElementById("{{ form.repeat_type.id_for_label }}");
+        var repeatCount = document.getElementById("{{ form.repeat_count.id_for_label }}");
+        if (repeatType && repeatCount) {
+            // "Gentager ikke" means one trip, so the count shows a locked 1.
+            // Choosing a repeat brings back the last real count (or 2).
+            var lastCount = 2;
+            var syncRepeatCount = function () {
+                var once = repeatType.value === "none";
+                var current = parseInt(repeatCount.value, 10);
+                if (once) {
+                    if (current >= 2) lastCount = current;
+                    repeatCount.value = 1;
+                } else if (!(current >= 2)) {
+                    repeatCount.value = lastCount;
+                }
+                repeatCount.readOnly = once;
+                repeatCount.min = once ? 1 : 2;
+            };
+            syncRepeatCount();
+            repeatType.addEventListener("change", syncRepeatCount);
         }
     });
 </script>

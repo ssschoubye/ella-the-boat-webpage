@@ -25,9 +25,11 @@ class BookingForm(forms.ModelForm):
     repeat_count = forms.IntegerField(
         label="Antal gange",
         required=False,
-        min_value=2,
+        # 1 is what the form shows for "Gentager ikke"; a repeat needs at
+        # least 2, which clean() checks.
+        min_value=1,
         max_value=52,
-        initial=4,
+        initial=1,
         help_text="Inklusiv den første tur.",
     )
 
@@ -52,6 +54,13 @@ class BookingForm(forms.ModelForm):
             self.add_error("end_date", "Slutdato kan ikke ligge før startdato.")
 
         repeat_type = cleaned_data.get("repeat_type")
-        if repeat_type and repeat_type != "none" and not cleaned_data.get("repeat_count"):
-            self.add_error("repeat_count", "Angiv hvor mange gange turen skal gentages.")
+        repeat_count = cleaned_data.get("repeat_count")
+        if repeat_type and repeat_type != "none":
+            if not repeat_count:
+                self.add_error("repeat_count", "Angiv hvor mange gange turen skal gentages.")
+            elif repeat_count < 2:
+                self.add_error("repeat_count", "En gentagende tur skal forekomme mindst 2 gange.")
+        else:
+            # Whatever was typed, a trip that doesn't repeat happens once.
+            cleaned_data["repeat_count"] = 1
         return cleaned_data

@@ -26,6 +26,7 @@
     <div class="week-grid">
         {% for day in days %}
         <div class="week-day{% if day.is_today %} week-day--today{% endif %}">
+            <a class="calendar__day-add" href="{% url 'tilfoj_tur' %}?dato={{ day.date|date:'Y-m-d' }}" aria-label="Tilføj tur {{ day.date_label }}"></a>
             <div class="week-day__header">
                 <span class="week-day__name">{{ day.weekday_full }}</span>
                 <span class="week-day__date">{{ day.date_label }}</span>
