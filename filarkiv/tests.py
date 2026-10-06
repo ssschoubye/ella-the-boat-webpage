@@ -221,6 +221,16 @@ class InlineViewingTests(MediaTestCase):
                 self.assertEqual(response.status_code, 302)
                 self.assertIn(reverse("login"), response["Location"])
 
+    def test_the_viewer_gets_the_picture_description_escaped(self):
+        picture = self.make_file("havn.png", png_bytes(), folder=billeder())
+        picture.description = 'Ved "broen" <b>kl. 7</b>'
+        picture.save()
+
+        response = self.client.get(reverse("filarkiv_folder", args=[billeder().pk]))
+
+        self.assertContains(response, 'data-description="Ved &quot;broen&quot; &lt;b&gt;kl. 7&lt;/b&gt;"')
+        self.assertContains(response, '<p class="lightbox__description" hidden></p>', html=True)
+
     def test_the_folder_page_shows_images_as_a_grid_and_documents_as_a_list(self):
         picture = self.make_file("havn.png", png_bytes(), folder=billeder())
         document = self.make_file("manual.pdf", b"%PDF", folder=billeder())

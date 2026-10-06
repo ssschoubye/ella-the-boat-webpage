@@ -40,6 +40,7 @@
             <button type="button" class="archive__tile js-lightbox-trigger"
                     data-full="{% url 'filarkiv_view' f.pk %}"
                     data-title="{{ f.title }}"
+                    data-description="{{ f.description }}"
                     data-download="{% url 'filarkiv_download' f.pk %}"
                     data-edit="{% url 'filarkiv_edit' f.pk %}">
                 {% if f.thumbnail %}
@@ -91,6 +92,7 @@
             <a class="lightbox__link" data-field="download">Hent</a>
             <a class="lightbox__link" data-field="edit">Rediger</a>
         </figcaption>
+        <p class="lightbox__description" hidden></p>
     </figure>
     <button type="button" class="lightbox__nav lightbox__nav--prev" data-step="-1" aria-label="Forrige billede">&lsaquo;</button>
     <button type="button" class="lightbox__nav lightbox__nav--next" data-step="1" aria-label="Næste billede">&rsaquo;</button>

@@ -1603,6 +1603,24 @@ body.event-modal-open {
     font-weight: 600;
 }
 
+/* Kept short and scrollable so a long description never pushes the
+   photo off the screen. */
+.lightbox__description {
+    margin: 0;
+    max-width: 40rem;
+    max-height: 5.5rem;
+    overflow-y: auto;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.9rem;
+    text-align: center;
+    white-space: pre-line;
+}
+
+.lightbox__figure:has(.lightbox__description:not([hidden])) .lightbox__image {
+    max-height: calc(100vh - 13rem);
+    max-height: calc(100dvh - 13rem);
+}
+
 .lightbox__nav,
 .lightbox__close {
     position: absolute;

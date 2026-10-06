@@ -11,6 +11,7 @@
     var counter = box.querySelector(".lightbox__counter");
     var download = box.querySelector('[data-field="download"]');
     var edit = box.querySelector('[data-field="edit"]');
+    var description = box.querySelector(".lightbox__description");
     var current = 0;
     var lastFocused = null;
     var touchStartX = null;
@@ -21,6 +22,8 @@
         image.src = data.full;
         image.alt = data.title;
         title.textContent = data.title;
+        description.textContent = data.description || "";
+        description.hidden = !data.description;
         counter.textContent = (current + 1) + " / " + triggers.length;
         download.href = data.download;
         edit.href = data.edit;
