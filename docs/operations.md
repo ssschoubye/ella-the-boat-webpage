@@ -145,6 +145,18 @@ ls -l /srv/state/ella/backups/db.sqlite3
 Accounts and invitations are rows in that database, so they are covered by the
 same backup as the bookings.
 
+## Picture thumbnails
+
+Thumbnails for the filarkiv grid are made when a picture is uploaded. After
+deploying the folder version for the first time, or if a thumbnail is
+missing, make the missing ones:
+
+```bash
+docker exec -u app ella python manage.py make_thumbnails
+```
+
+It skips pictures that already have one, so it is safe to run again.
+
 ## Running management commands
 
 The container runs as `app`. Use `-u app`, otherwise files created by the

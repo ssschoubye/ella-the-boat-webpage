@@ -22,7 +22,7 @@ cloudflared ──http──▶ Caddy ──http──▶ ella container :80
                                        ▼
                               /data  ◀── bind mount ── /srv/state/ella
                               ├── db.sqlite3 (WAL)            (ADR 0003)
-                              ├── media/filarkiv/<uuid>/…     uploads
+                              ├── media/filarkiv/<uuid>/…     uploads + miniature.jpg
                               └── backups/db.sqlite3          snapshot for restic
 ```
 
@@ -36,7 +36,7 @@ repo. This repo owns only the image.
 | `core` | `/`, `/healthz/` | Public front page and signed-in start page, placeholder pages, the login-wall middleware, the health check, `snapshot_db` |
 | `adgang` | `/invitation/<token>/` | Single-use invitation links. The signup form lives on the link itself, which is the only way an account is created ([ADR 0014](adr/0014-invite-links-and-passwords.md)) |
 | `booking` | `/kalender/` | Month/week/list calendar of trips; repeating trips are stored as separate rows sharing a `series_id` |
-| `filarkiv` | `/filarkiv/` | Upload, search and download files (max 25 MB); only downloadable through a logged-in view |
+| `filarkiv` | `/filarkiv/` | Folders under two fixed roots, Billeder and Filer; upload, search, move and download files (max 25 MB). Pictures show as a thumbnail grid with a viewer ([ADR 0015](adr/0015-filarkiv-folders-and-inline-images.md)); everything is only reachable through logged-in views |
 | `vedligehold` | `/vedligehold/` | Maintenance tickets on a board with comments; finished tickets archive themselves after 30 days |
 
 All three feature apps record "who" as a foreign key to the signed-in
