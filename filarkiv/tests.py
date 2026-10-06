@@ -241,6 +241,29 @@ class FolderTests(MediaTestCase):
 
         self.assertContains(response, 'class="archive__folder"', count=2)
 
+    def test_the_path_links_every_folder_above_and_shows_the_current_one_as_text(self):
+        sommer = Folder.objects.create(name="Sommertur", parent=billeder())
+        dag = Folder.objects.create(name="Dag 1", parent=sommer)
+
+        response = self.client.get(reverse("filarkiv_folder", args=[dag.pk]))
+
+        self.assertContains(response, f'<a href="{reverse("filarkiv")}">Filarkiv</a>', html=True)
+        self.assertContains(response, f'<a href="{reverse("filarkiv_folder", args=[billeder().pk])}">Billeder</a>', html=True)
+        self.assertContains(response, f'<a href="{reverse("filarkiv_folder", args=[sommer.pk])}">Sommertur</a>', html=True)
+        self.assertContains(response, '<span aria-current="page">Dag 1</span>', html=True)
+
+    def test_the_up_arrow_goes_to_the_parent_folder(self):
+        sommer = Folder.objects.create(name="Sommertur", parent=billeder())
+
+        response = self.client.get(reverse("filarkiv_folder", args=[sommer.pk]))
+
+        self.assertContains(response, f'class="archive__up" href="{reverse("filarkiv_folder", args=[billeder().pk])}"')
+
+    def test_the_up_arrow_on_a_root_folder_goes_to_the_archive_start(self):
+        response = self.client.get(reverse("filarkiv_folder", args=[billeder().pk]))
+
+        self.assertContains(response, f'class="archive__up" href="{reverse("filarkiv")}"')
+
     def test_creating_a_subfolder(self):
         response = self.client.post(reverse("filarkiv_folder_create", args=[billeder().pk]), {"name": " Sommertur "})
 

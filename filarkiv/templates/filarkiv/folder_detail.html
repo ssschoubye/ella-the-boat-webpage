@@ -6,13 +6,17 @@
 {% block content %}
 <section class="page-header page-header--split">
     <div>
-        <nav class="archive__breadcrumbs" aria-label="Mapper">
-            <a href="{% url 'filarkiv' %}">Filarkiv</a>
-            {% for crumb in breadcrumbs %}{% if not forloop.last %}
-            <span aria-hidden="true">/</span> <a href="{% url 'filarkiv_folder' crumb.pk %}">{{ crumb.name }}</a>
-            {% endif %}{% endfor %}
-        </nav>
+        <p class="page-header__eyebrow">Filarkiv</p>
         <h1>{{ folder.name }}</h1>
+        <nav class="archive__path" aria-label="Sti">
+            <a class="archive__up" href="{% if folder.parent_id %}{% url 'filarkiv_folder' folder.parent_id %}{% else %}{% url 'filarkiv' %}{% endif %}"
+               title="Op en mappe" aria-label="Op en mappe">&uarr;</a>
+            <a href="{% url 'filarkiv' %}">Filarkiv</a>
+            {% for crumb in breadcrumbs %}
+            <span class="archive__path-sep" aria-hidden="true">/</span>
+            {% if forloop.last %}<span aria-current="page">{{ crumb.name }}</span>{% else %}<a href="{% url 'filarkiv_folder' crumb.pk %}">{{ crumb.name }}</a>{% endif %}
+            {% endfor %}
+        </nav>
     </div>
     <div class="archive__header-actions">
         <a class="button-secondary" href="{% url 'filarkiv_folder_create' folder.pk %}">+ Ny mappe</a>
