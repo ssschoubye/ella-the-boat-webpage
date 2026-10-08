@@ -21,6 +21,7 @@ set the old one's status to `Superseded by ADR-NNNN`.
 | [0012](0012-public-front-page.md) | A public front page | Accepted |
 | [0013](0013-email-sign-in-codes.md) | Email sign-in codes alongside Google, sent through Resend | Superseded by 0014 |
 | [0014](0014-invite-links-and-passwords.md) | Invitation links and a password, and nothing else | Accepted |
+| [0015](0015-filarkiv-folders-and-inline-images.md) | Filarkiv folders, and pictures shown in the browser | Accepted |
 
 ## Writing a new one
 
