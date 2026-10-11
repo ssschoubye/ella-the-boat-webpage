@@ -56,9 +56,9 @@ def folder_create(request, pk):
     parent = get_object_or_404(Folder, pk=pk)
     form = FolderForm(request.POST or None, parent=parent)
     if request.method == "POST" and form.is_valid():
-        folder = form.save(commit=False)
-        folder.parent = parent
-        folder.save()
+        # FolderForm has already put the folder under `parent`, so that
+        # Folder.clean() could validate the placement.
+        folder = form.save()
         return redirect("filarkiv_folder", pk=folder.pk)
     return render(request, "filarkiv/folder_form.html", {"form": form, "parent": parent})
 
@@ -115,7 +115,9 @@ def upload_file(request):
             return redirect("filarkiv_folder", pk=archive_file.folder_id)
     else:
         mappe = request.GET.get("mappe", "")
-        initial_folder = Folder.objects.filter(pk=mappe).first() if mappe.isdigit() else None
+        # isdigit() is too generous: it is true of a superscript digit such
+        # as ², which the pk lookup then rejects with a ValueError.
+        initial_folder = Folder.objects.filter(pk=mappe).first() if mappe.isdecimal() else None
         form = ArchiveFileForm(initial={"folder": initial_folder})
     return render(request, "filarkiv/upload_form.html", {"form": form})
 
@@ -132,15 +134,21 @@ def file_edit(request, pk):
 @require_POST
 def delete_file(request, pk):
     archive_file = get_object_or_404(ArchiveFile, pk=pk)
-    archive_file.delete_stored_files()
-    archive_file.delete()
-    return redirect("filarkiv_folder", pk=archive_file.folder_id)
+    folder_id = archive_file.folder_id
+    with transaction.atomic():
+        archive_file.delete()
+        # Only touch the disk once the row is really gone, as
+        # _delete_with_contents does. A row left pointing at bytes that are
+        # gone breaks the whole folder page: _file_row.html asks the file for
+        # its size.
+        transaction.on_commit(archive_file.delete_stored_files)
+    return redirect("filarkiv_folder", pk=folder_id)
 
 
 def download_file(request, pk):
     archive_file = get_object_or_404(ArchiveFile, pk=pk)
     return FileResponse(
-        archive_file.file.open("rb"),
+        _open(archive_file.file),
         as_attachment=True,
         filename=archive_file.filename,
     )
@@ -160,8 +168,21 @@ def thumbnail(request, pk):
     return _inline(archive_file.thumbnail, "image/jpeg", "miniature.jpg")
 
 
+def _open(field_file):
+    """The file on disk, or a 404.
+
+    A record can outlive its bytes: a restore from backup brings the database
+    and the media tree back separately, which is why make_thumbnails exists.
+    The grid already handles a 404 by falling back to the extension badge.
+    """
+    try:
+        return field_file.open("rb")
+    except FileNotFoundError:
+        raise Http404
+
+
 def _inline(field_file, content_type, filename):
-    response = FileResponse(field_file.open("rb"), content_type=content_type, filename=filename)
+    response = FileResponse(_open(field_file), content_type=content_type, filename=filename)
     response["Content-Security-Policy"] = INLINE_CSP
     # A record's file never changes, so the grid and the viewer can reuse it.
     response["Cache-Control"] = "private, max-age=86400"

@@ -1,12 +1,14 @@
 import shutil
 import tempfile
 from io import BytesIO, StringIO
+from unittest import mock
 
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
-from django.db import connection
+from django.core.exceptions import ValidationError
+from django.db import DatabaseError, IntegrityError, connection, transaction
 from django.db.migrations.executor import MigrationExecutor
 from django.test import TestCase, TransactionTestCase, override_settings
 from django.urls import reverse
@@ -121,6 +123,14 @@ class UploadIntoFolderTests(MediaTestCase):
 
         self.assertContains(response, f'<option value="{billeder().pk}" selected>Billeder</option>', html=True)
 
+    def test_a_junk_folder_in_the_query_string_is_ignored(self):
+        # "²" is isdigit() but not something the pk lookup will take.
+        for mappe in ("²", "abc", "1.5", "-1", ""):
+            with self.subTest(mappe=mappe):
+                response = self.client.get(reverse("filarkiv_upload") + f"?mappe={mappe}")
+
+                self.assertEqual(response.status_code, 200)
+
     def test_the_folder_choices_show_the_full_path(self):
         Folder.objects.create(name="2026", parent=billeder())
 
@@ -150,6 +160,14 @@ class ThumbnailTests(MediaTestCase):
 
         self.assertFalse(ArchiveFile.objects.get().thumbnail)
 
+    def test_an_image_with_too_many_pixels_gets_no_thumbnail(self):
+        # The cap is patched down rather than uploading a real 60-Mpixel
+        # file: what matters is that the size is checked before the decode.
+        with mock.patch("filarkiv.thumbnails.MAX_PIXELS", 100):
+            self.upload("stor.png", png_bytes((200, 200)), folder=billeder())
+
+        self.assertFalse(ArchiveFile.objects.get().thumbnail)
+
     def test_the_backfill_command_makes_missing_thumbnails(self):
         archive_file = self.make_file("havn.png", png_bytes(), folder=billeder())
 
@@ -163,10 +181,27 @@ class ThumbnailTests(MediaTestCase):
         archive_file = ArchiveFile.objects.get()
         storage, file_name, thumb_name = archive_file.file.storage, archive_file.file.name, archive_file.thumbnail.name
 
-        self.client.post(reverse("filarkiv_delete", args=[archive_file.pk]))
+        # The disk work waits for the commit, as it does for a whole folder.
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(reverse("filarkiv_delete", args=[archive_file.pk]))
 
         self.assertFalse(storage.exists(file_name))
         self.assertFalse(storage.exists(thumb_name))
+
+
+    def test_a_delete_that_fails_leaves_the_file_where_the_row_can_find_it(self):
+        self.upload("havn.png", png_bytes(), folder=billeder())
+        archive_file = ArchiveFile.objects.get()
+        storage, file_name = archive_file.file.storage, archive_file.file.name
+
+        with mock.patch.object(ArchiveFile, "delete", side_effect=DatabaseError("database is locked")):
+            with self.assertRaises(DatabaseError):
+                self.client.post(reverse("filarkiv_delete", args=[archive_file.pk]))
+
+        # A row with no bytes behind it breaks the whole folder page, so the
+        # bytes must outlive a failed delete, not the other way round.
+        self.assertTrue(ArchiveFile.objects.filter(pk=archive_file.pk).exists())
+        self.assertTrue(storage.exists(file_name))
 
 
 class InlineViewingTests(MediaTestCase):
@@ -210,6 +245,21 @@ class InlineViewingTests(MediaTestCase):
         response = self.client.get(reverse("filarkiv_thumbnail", args=[archive_file.pk]))
 
         self.assertEqual(response.status_code, 404)
+
+    def test_a_file_missing_from_disk_is_a_404_not_a_crash(self):
+        # A restore brings the database and the media tree back separately,
+        # which is why make_thumbnails exists.
+        self.upload("havn.png", png_bytes(), folder=billeder())
+        archive_file = ArchiveFile.objects.get()
+        storage = archive_file.file.storage
+        storage.delete(archive_file.file.name)
+        storage.delete(archive_file.thumbnail.name)
+
+        for name in ("filarkiv_view", "filarkiv_download", "filarkiv_thumbnail"):
+            with self.subTest(view=name):
+                response = self.client.get(reverse(name, args=[archive_file.pk]))
+
+                self.assertEqual(response.status_code, 404)
 
     def test_both_inline_urls_are_behind_the_login_wall(self):
         archive_file = self.make_file("havn.png", png_bytes(), folder=billeder())
@@ -288,6 +338,46 @@ class FolderTests(MediaTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Folder.objects.filter(name__iexact="sommertur").count(), 1)
+
+    def test_two_folders_in_the_same_place_cannot_share_a_danish_name(self):
+        Folder.objects.create(name="Æbler", parent=billeder())
+
+        response = self.client.post(reverse("filarkiv_folder_create", args=[billeder().pk]), {"name": "æbler"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Folder.objects.filter(parent=billeder()).count(), 1)
+
+    def test_a_folder_cannot_be_its_own_parent(self):
+        sommer = Folder.objects.create(name="Sommertur", parent=billeder())
+        sommer.parent = sommer
+
+        with self.assertRaises(ValidationError):
+            sommer.full_clean()
+
+    def test_a_folder_cannot_be_moved_into_one_of_its_own_subfolders(self):
+        sommer = Folder.objects.create(name="Sommertur", parent=billeder())
+        sommer.parent = Folder.objects.create(name="Dag 1", parent=sommer)
+
+        with self.assertRaises(ValidationError):
+            sommer.full_clean()
+
+    def test_a_cycle_written_around_validation_still_has_a_finite_path(self):
+        sommer = Folder.objects.create(name="Sommertur", parent=billeder())
+        dag = Folder.objects.create(name="Dag 1", parent=sommer)
+        Folder.objects.filter(pk=sommer.pk).update(parent=dag)
+        sommer.refresh_from_db()
+
+        # Not the right answer -- there is no right answer for a cycle -- but
+        # an answer, rather than a worker spinning until it is killed.
+        self.assertLessEqual(len(sommer.ancestors()), 2)
+
+    def test_a_third_top_level_folder_is_rejected(self):
+        with self.assertRaises(ValidationError):
+            Folder(name="Fotos").full_clean()
+
+    def test_the_database_refuses_a_second_root_of_the_same_name(self):
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Folder.objects.create(name="Billeder")
 
     def test_the_same_name_is_fine_in_another_folder(self):
         Folder.objects.create(name="2026", parent=billeder())
