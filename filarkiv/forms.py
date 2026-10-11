@@ -84,10 +84,13 @@ class FolderForm(forms.ModelForm):
     def __init__(self, *args, parent, **kwargs):
         super().__init__(*args, **kwargs)
         self.parent = parent
+        # The form has no parent field, so give the instance its parent here:
+        # Folder.clean() runs during validation and needs to know where this
+        # folder is going.
+        self.instance.parent = parent
 
     def clean_name(self):
         name = self.cleaned_data["name"].strip()
-        siblings = Folder.objects.filter(parent=self.parent, name__iexact=name).exclude(pk=self.instance.pk)
-        if siblings.exists():
+        if Folder.has_sibling_named(self.parent, name, exclude_pk=self.instance.pk):
             raise forms.ValidationError("Der findes allerede en mappe med det navn her.")
         return name

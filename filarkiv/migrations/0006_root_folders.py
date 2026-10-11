@@ -1,8 +1,17 @@
 """Create the two fixed top-level folders and sort existing files into them:
 images into Billeder, everything else into Filer."""
+from pathlib import Path
+
 from django.db import migrations
 
-from filarkiv.models import is_image_name
+# Frozen on purpose, rather than imported from filarkiv.models: this
+# migration has to sort files the same way forever, so that a database built
+# fresh in CI or on a new machine ends up where production did.
+IMAGE_SUFFIXES = {"jpg", "jpeg", "png", "gif", "webp"}
+
+
+def is_image_name(name):
+    return Path(name).suffix.lstrip(".").lower() in IMAGE_SUFFIXES
 
 
 def create_roots(apps, schema_editor):

@@ -2,6 +2,7 @@ import uuid
 from pathlib import Path
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 
 # The only types served inline (ADR 0015). Everything else, SVG included, is
@@ -51,6 +52,13 @@ class Folder(models.Model):
         verbose_name_plural = "mapper"
         constraints = [
             models.UniqueConstraint(fields=["parent", "name"], name="filarkiv_folder_unique_name_per_parent"),
+            # The pair above says nothing about the top level: two NULL
+            # parents are distinct in SQL, so without this a third root
+            # folder is possible. root_key would be empty on it, which makes
+            # is_root False, which makes it renameable and deletable.
+            models.UniqueConstraint(
+                fields=["name"], condition=models.Q(parent=None), name="filarkiv_folder_unique_root_name"
+            ),
         ]
 
     def __str__(self):
@@ -61,13 +69,54 @@ class Folder(models.Model):
         return self.root_key is not None
 
     def ancestors(self):
-        """The path from the top-level folder down to this one, inclusive."""
+        """The path from the top-level folder down to this one, inclusive.
+
+        Stops if it ever meets the same folder twice. clean() rejects a cycle,
+        but this walk is on the folder page and in the admin changelist, and a
+        row written around validation must not be able to spin a worker
+        forever.
+        """
         chain = []
+        seen = set()
         folder = self
-        while folder is not None:
+        while folder is not None and folder.pk not in seen:
+            seen.add(folder.pk)
             chain.append(folder)
             folder = folder.parent
         return chain[::-1]
+
+    @staticmethod
+    def has_sibling_named(parent, name, exclude_pk=None):
+        """Is there already a folder of this name in `parent`?
+
+        Compared casefolded in Python: SQLite's iexact only folds ASCII and
+        the unique constraint is case-sensitive, so neither catches Æbler
+        against æbler -- and Danish names are the normal case here.
+        """
+        siblings = Folder.objects.filter(parent=parent)
+        if exclude_pk is not None:
+            siblings = siblings.exclude(pk=exclude_pk)
+        folded = name.strip().casefold()
+        return any(sibling.name.casefold() == folded for sibling in siblings)
+
+    def clean(self):
+        super().clean()
+        if self.parent_id is None:
+            # Billeder and Filer are made by migration 0006 and are the only
+            # folders that belong at the top level.
+            if not self.is_root:
+                raise ValidationError({"parent": "Vælg en overmappe. Kun Billeder og Filer ligger øverst."})
+            return
+
+        parent = Folder.objects.filter(pk=self.parent_id).first()
+        if parent is None:
+            return
+        if self.pk is not None and self.pk in {f.pk for f in parent.ancestors()}:
+            raise ValidationError(
+                {"parent": "En mappe kan ikke ligge i sig selv eller i en af sine egne undermapper."}
+            )
+        if self.has_sibling_named(self.parent_id, self.name, exclude_pk=self.pk):
+            raise ValidationError({"name": "Der findes allerede en mappe med det navn her."})
 
     def is_empty(self):
         return not self.children.exists() and not self.files.exists()
