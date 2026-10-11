@@ -1,7 +1,9 @@
 # 0006. Site-wide login wall and private uploads
 
 - **Status:** Accepted (recorded retroactively; in place since v1.0, 2026-09-17),
-  amended by [ADR-0012](0012-public-front-page.md): the front page is public
+  amended by [ADR-0012](0012-public-front-page.md): the front page is public,
+  and by [ADR-0015](0015-filarkiv-folders-and-inline-images.md): pictures are
+  also shown inline, behind the same login
 - **Date:** 2026-10-03
 
 ## Context

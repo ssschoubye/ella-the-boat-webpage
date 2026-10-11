@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}{% if folder %}Omdøb mappe{% else %}Ny mappe{% endif %} &middot; Filarkiv &middot; Ella{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <p class="page-header__eyebrow">Filarkiv &middot; {{ parent }}</p>
+    <h1>{% if folder %}Omdøb mappe{% else %}Ny mappe{% endif %}</h1>
+</section>
+
+<form method="post" class="form-card">
+    {% csrf_token %}
+
+    <div class="form-field">
+        <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+        {{ form.name }}
+        {% if form.name.errors %}<p class="form-field__errors">{{ form.name.errors|join:", " }}</p>{% endif %}
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="button-primary">{% if folder %}Gem navn{% else %}Opret mappe{% endif %}</button>
+        <a class="button-secondary" href="{% if folder %}{% url 'filarkiv_folder' folder.pk %}{% else %}{% url 'filarkiv_folder' parent.pk %}{% endif %}">Annuller</a>
+    </div>
+</form>
+{% endblock %}

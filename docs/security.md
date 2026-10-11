@@ -9,7 +9,7 @@
 | **Invite-only sign-up** | An account can only be created by someone holding an unused invitation link, on the link's own page ([ADR 0014](adr/0014-invite-links-and-passwords.md)) | this repo |
 | **django-axes** | Five failed logins locks out the IP, and the (email, IP) pair, for 30 minutes. The main defence, since the login page is public | this repo |
 | Login wall | Every page requires a session except the public front page, the login page, the invitation page, `/admin/`, `/static/` and `/healthz/` ([ADR 0006](adr/0006-site-wide-login-wall-and-private-uploads.md), [ADR 0012](adr/0012-public-front-page.md)) | this repo |
-| Private uploads | No `MEDIA_URL`; files only via the signed-in download view, served as attachments | this repo |
+| Private uploads | No `MEDIA_URL`; files only via signed-in views. Downloads are attachments; only JPG/PNG/GIF/WEBP are also shown inline, with a fixed `Content-Type`, `nosniff` and a `default-src 'none'; sandbox` CSP ([ADR 0015](adr/0015-filarkiv-folders-and-inline-images.md)) | this repo |
 | Container | Non-root (uid 10001), read-only root FS, `no-new-privileges`, only reachable on the internal `edge` network | this repo + home-server |
 
 There is **no Cloudflare Access** in front of this site. If you find a Zero

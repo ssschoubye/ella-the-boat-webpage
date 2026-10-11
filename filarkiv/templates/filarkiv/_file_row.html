@@ -1,0 +1,23 @@
+{% load people %}
+<li class="archive__item">
+    <span class="archive__ext">{{ f.extension|default:"FIL" }}</span>
+    <div class="archive__info">
+        <p class="archive__title">{{ f.title }}</p>
+        <p class="archive__meta">
+            {% if f.folder_path %}<a href="{% url 'filarkiv_folder' f.folder_id %}">{{ f.folder_path }}</a> &middot; {% endif %}
+            {{ f.uploaded_at|date:"j. M Y" }}
+            {% if f.uploaded_by %}&middot; {{ f.uploaded_by|person }}{% endif %}
+            &middot; {{ f.file.size|filesizeformat }}
+        </p>
+        {% if f.description %}<p class="archive__description">{{ f.description }}</p>{% endif %}
+    </div>
+    <div class="archive__actions">
+        {% if f.is_image %}<a class="button-secondary" href="{% url 'filarkiv_view' f.pk %}">Vis</a>{% endif %}
+        <a class="button-secondary" href="{% url 'filarkiv_download' f.pk %}">Hent</a>
+        <a class="button-edit" href="{% url 'filarkiv_edit' f.pk %}">Rediger</a>
+        <form method="post" action="{% url 'filarkiv_delete' f.pk %}" onsubmit="return confirm('Slet filen \'{{ f.title|escapejs }}\'? Det kan ikke fortrydes.');">
+            {% csrf_token %}
+            <button type="submit" class="button-danger">Slet</button>
+        </form>
+    </div>
+</li>
